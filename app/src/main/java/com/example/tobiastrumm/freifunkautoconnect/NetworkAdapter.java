@@ -41,10 +41,10 @@ public class NetworkAdapter extends ArrayAdapter<Network> {
         //Populate the data into the template view
         viewHolder.tv_ssid.setText(network.ssid);
         if(network.active){
-            convertView.setBackgroundColor(Color.GREEN);
+            convertView.setBackgroundColor(Color.parseColor("#8bc34a"));
         }
         else{
-            convertView.setBackgroundColor(Color.RED);
+            convertView.setBackgroundResource(R.drawable.abc_item_background_holo_light);
         }
         return convertView;
     }
