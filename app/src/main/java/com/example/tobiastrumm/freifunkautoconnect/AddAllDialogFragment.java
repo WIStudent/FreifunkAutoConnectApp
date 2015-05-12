@@ -19,7 +19,7 @@ public class AddAllDialogFragment extends DialogFragment {
 
     private OnAddAllListener oaal;
 
-    public AddAllDialogFragment(OnAddAllListener oaal){
+    public void setListener(OnAddAllListener oaal){
         this.oaal = oaal;
     }
 

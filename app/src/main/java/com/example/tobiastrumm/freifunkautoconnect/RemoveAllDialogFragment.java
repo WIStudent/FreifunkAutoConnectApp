@@ -18,7 +18,7 @@ public class RemoveAllDialogFragment extends DialogFragment {
 
     private OnRemoveAllListener oral;
 
-    public RemoveAllDialogFragment(OnRemoveAllListener oral){
+    public void setListener(OnRemoveAllListener oral){
         this.oral = oral;
     }
 

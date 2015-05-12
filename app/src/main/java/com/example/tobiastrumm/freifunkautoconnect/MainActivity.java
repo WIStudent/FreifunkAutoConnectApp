@@ -1,6 +1,5 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
-import android.app.DialogFragment;
 import android.content.Context;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -166,7 +165,8 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     */
 
     public void onClickAddAllNetworks(View view){
-        DialogFragment df = new AddAllDialogFragment(this);
+        AddAllDialogFragment df = new AddAllDialogFragment();
+        df.setListener(this);
         df.show(this.getFragmentManager(),"");
     }
 
@@ -189,7 +189,8 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     }
 
     public void onClickRemoveAllNetworks(View view){
-        DialogFragment df = new RemoveAllDialogFragment(this);
+        RemoveAllDialogFragment df = new RemoveAllDialogFragment();
+        df.setListener(this);
         df.show(this.getFragmentManager(),"");
     }
 
