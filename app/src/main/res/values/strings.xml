@@ -5,4 +5,8 @@
     <string name="action_settings">Settings</string>
     <string name="btn_add_all">Add all</string>
     <string name="btn_remove_all">Remove all</string>
+    <string name="dialog_remove_all">Remove all listed networks?</string>
+    <string name="dialog_add_all">Add all listed networks?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>

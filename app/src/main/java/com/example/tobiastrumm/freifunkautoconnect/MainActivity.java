@@ -1,50 +1,115 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
-import android.content.DialogInterface;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.os.Environment;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
-public class MainActivity extends ActionBarActivity implements AdapterView.OnItemClickListener{
+public class MainActivity extends ActionBarActivity implements AdapterView.OnItemClickListener, RemoveAllDialogFragment.OnRemoveAllListener, AddAllDialogFragment.OnAddAllListener{
+
+    private static String DIRECTORY = "freifunkautoconnect";
+    private static String USER_SSIDS_FILE = "user_ssids.csv";
+
+    private static String TAG = MainActivity.class.getSimpleName();
+
 
     private ArrayList<Network> networks;
-
-    // TODO: Just a placeholder. In the final version, networks should come from a file that can easily be updated.
-    private static final Network[] NETWORKS = {
-            new Network("\"muenster.freifunk.net\""),
-            new Network("\"placeholder1\""),
-            new Network("\"placeholder2\""),
-            new Network("\"placeholder3\""),
-            new Network("\"placeholder4\""),
-            new Network("\"placeholder5\""),
-            new Network("\"placeholder6\""),
-            new Network("\"placeholder7\""),
-            new Network("\"placeholder8\""),
-            new Network("\"placeholder9\""),
-            new Network("\"placeholder10\""),
-            new Network("\"placeholder11\""),
-            new Network("\"placeholder12\""),
-            new Network("\"placeholder13\""),
-    };
 
     private ListView lv;
     private NetworkAdapter na;
     private WifiManager wm;
+
+    private void getSSIDs() throws IOException {
+        InputStreamReader is = new InputStreamReader(getAssets().open("ssids.csv"));
+        BufferedReader reader = new BufferedReader(is);
+        String line;
+        while ((line = reader.readLine()) != null) {
+            networks.add(new Network(line));
+        }
+
+        // Read user defined ssids
+        // Check if external storage is available
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            File user_ssids = new File(Environment.getExternalStorageDirectory() + File.separator + DIRECTORY + File.separator + USER_SSIDS_FILE );
+            // Check if file exists
+            if(!user_ssids.exists()){
+                // If not, create the file
+                Log.i(TAG, "Start creation of user_ssids.csv file");
+                user_ssids = createUserSSIDFile();
+            }
+            else{
+                Log.i(TAG, "user_ssids.csv already exists");
+            }
+            // If the file was found/created:
+            if(user_ssids != null){
+                is = new InputStreamReader(new FileInputStream(user_ssids));
+                reader = new BufferedReader(is);
+                while ((line = reader.readLine()) != null) {
+                    networks.add(new Network(line));
+                }
+            }
+            else{
+                Log.w(TAG, "Could not find or create user_ssids file.");
+            }
+
+        }
+    }
+
+    private File createUserSSIDFile(){
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File directory = new File(Environment.getExternalStorageDirectory() + File.separator + DIRECTORY);
+            if(!directory.exists()){
+                // Create directory
+                Log.i(TAG, "Create freifunkautoconnect directory");
+                directory.mkdir();
+            }
+            File user_ssids = new File(directory, USER_SSIDS_FILE);
+            try {
+                // Create empty file
+                Log.i(TAG, "Create empty user_ssids.csv file");
+                user_ssids.createNewFile();
+            }
+            catch (IOException e) {
+                Log.w(TAG, "Could not create user_ssids.csv file.");
+                return null;
+            }
+
+            // Make sure that the new file will be visible if the device is connected to a pc over USB cable.
+            Log.i(TAG, "Scan for user_ssids.csv file");
+            MediaScannerConnection.scanFile(
+                    this,
+                    new String[]{directory.getAbsolutePath(), user_ssids.getAbsolutePath(), },
+                    null,
+                    new MediaScannerConnection.OnScanCompletedListener() {
+                        public void onScanCompleted(String path, Uri uri) {
+                            Log.i(TAG, "Scanned " + path + ":");
+                            Log.i(TAG, "-> uri=" + uri);
+                        }
+                    }
+            );
+        }
+        return null;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +117,13 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         setContentView(R.layout.activity_main);
 
         networks = new ArrayList<Network>();
-        networks.addAll(Arrays.asList(NETWORKS));
+        try{
+            getSSIDs();
+        }
+        catch(IOException e){
+            // Could not read SSIDs from csv file.
+        }
+
 
         wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         setupUI();
@@ -69,7 +140,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
     }
 
-    // Opttions Menu is not needed at the moment.
+    // Options Menu is not needed at the moment.
     /*
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -94,7 +165,12 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     }
     */
 
-    public void addAllNetworks(View view){
+    public void onClickAddAllNetworks(View view){
+        DialogFragment df = new AddAllDialogFragment(this);
+        df.show(this.getFragmentManager(),"");
+    }
+
+    public void addAllNetworks(){
         for(Network n: networks){
             if(!n.active){
                 n.active = true;
@@ -112,15 +188,22 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         na.notifyDataSetChanged();
     }
 
-    public void removeAllNetworks(View view){
+    public void onClickRemoveAllNetworks(View view){
+        DialogFragment df = new RemoveAllDialogFragment(this);
+        df.show(this.getFragmentManager(),"");
+    }
+
+    public void removeAllNetworks(){
         // WARNING: This could cause some performance issues depending of the number of networks and saved networks.
         for(Network n: networks){
             if(n.active){
                 n.active = false;
                 List<WifiConfiguration> wificonf = wm.getConfiguredNetworks();
-                for(WifiConfiguration wc: wificonf){
-                    if(wc.SSID.equals(n.ssid)){
-                        wm.removeNetwork(wc.networkId);
+                if(wificonf != null) {
+                    for (WifiConfiguration wc : wificonf) {
+                        if (wc.SSID.equals(n.ssid)) {
+                            wm.removeNetwork(wc.networkId);
+                        }
                     }
                 }
             }
@@ -142,15 +225,18 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         // Check which Network is already added to the network configuration
         // WARNING: Could cause performance issues for large lists of networks and network configurations
         List<WifiConfiguration> wifiConf = wm.getConfiguredNetworks();
-        for(Network n: networks){
-            n.active = false;
-            for(WifiConfiguration wc: wifiConf){
-                if(wc.SSID.equals(n.ssid)){
-                    n.active = true;
+        if(wifiConf != null) {
+            for (Network n : networks) {
+                n.active = false;
+                for (WifiConfiguration wc : wifiConf) {
+                    if (wc.SSID.equals(n.ssid)) {
+                        n.active = true;
+                    }
                 }
             }
+            na.notifyDataSetChanged();
         }
-        na.notifyDataSetChanged();
+
     }
 
     @Override
@@ -161,9 +247,11 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         if(n.active){
             n.active = false;
             List<WifiConfiguration> wificonf = wm.getConfiguredNetworks();
-            for(WifiConfiguration wc: wificonf){
-                if(wc.SSID.equals(n.ssid)){
-                    wm.removeNetwork(wc.networkId);
+            if(wificonf != null) {
+                for (WifiConfiguration wc : wificonf) {
+                    if (wc.SSID.equals(n.ssid)) {
+                        wm.removeNetwork(wc.networkId);
+                    }
                 }
             }
         }
