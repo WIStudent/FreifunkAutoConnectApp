@@ -8,7 +8,10 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -115,6 +118,13 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+        // Use Toolbar instead of ActionBar. See:
+        // http://blog.xamarin.com/android-tips-hello-toolbar-goodbye-action-bar/
+        // https://stackoverflow.com/questions/29055491/android-toolbar-for-api-19-for-api-21-works-ok
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
         networks = new ArrayList<Network>();
         try{
             getSSIDs();
@@ -139,8 +149,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
     }
 
-    // Options Menu is not needed at the moment.
-    /*
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -162,7 +171,6 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
         return super.onOptionsItemSelected(item);
     }
-    */
 
     public void onClickAddAllNetworks(View view){
         AddAllDialogFragment df = new AddAllDialogFragment();
