@@ -2,4 +2,6 @@
 <resources>
     <color name="primary">#e91e63</color>
     <color name="primary_dark">#c2185b</color>
+    <color name="accent">#536dfe</color>
+    <color name="actionbar_title_text">#ffffff</color>
 </resources>
