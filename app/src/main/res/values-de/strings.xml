@@ -2,7 +2,6 @@
     <string name="app_name">Freifunk Auto Connect</string>
 
     <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
     <string name="btn_add_all">Alle Hinzufügen</string>
     <string name="btn_remove_all">Alle Entfernen</string>
     <string name="dialog_remove_all">Sollen alle Netzwerke entfernt werden?</string>
