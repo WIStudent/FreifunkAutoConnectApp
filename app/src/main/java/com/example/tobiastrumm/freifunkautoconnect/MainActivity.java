@@ -1,11 +1,13 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
+import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.view.MenuItemCompat;
@@ -41,6 +43,8 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     private ListView lv;
     private NetworkAdapter na;
     private WifiManager wm;
+
+
 
     private void getSSIDs() throws IOException {
         InputStreamReader is = new InputStreamReader(getAssets().open("ssids.csv"));
@@ -199,22 +203,63 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         df.show(this.getFragmentManager(),"");
     }
 
-    public void addAllNetworks(){
-        for(Network n: networks){
-            if(!n.active){
-                n.active = true;
-                // Create WifiConfiguration and add it to the known networks.
-                WifiConfiguration wc = new WifiConfiguration();
-                wc.SSID = n.ssid;
-                wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-                int networkId = wm.addNetwork(wc);
-                wm.enableNetwork(networkId, false);
-            }
+    private class AddAllTask extends AsyncTask<Void, Integer, Void> {
+        ProgressDialog progress;
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            // Update progressbar
+            progress.setProgress(values[0]);
         }
-        // Save configuration
-        wm.saveConfiguration();
-        // Notify the NetworkAdapter that the content of ArrayList networks was changed.
-        na.notifyDataSetChanged();
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            // Add all networks to network configuration
+            int i = 0;
+            WifiManager wmAsync = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            for(Network n: networks){
+                if(!n.active){
+                    n.active = true;
+                    // Create WifiConfiguration and add it to the known networks.
+                    WifiConfiguration wc = new WifiConfiguration();
+                    wc.SSID = n.ssid;
+                    wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                    int networkId = wmAsync.addNetwork(wc);
+                    wmAsync.enableNetwork(networkId, false);
+                }
+                i++;
+                publishProgress(i);
+            }
+            // Save configuration
+            wmAsync.saveConfiguration();
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Create ProgressDialog and show it
+            progress = new ProgressDialog(MainActivity.this);
+            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            progress.setIndeterminate(false);
+            progress.setMax(networks.size());
+            progress.setCancelable(false);
+            progress.show();
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            // Notify the NetworkAdapter that the content of ArrayList networks was changed.
+            na.notifyDataSetChanged();
+            // Close ProgressDialog
+            progress.cancel();
+        }
+    }
+
+    public void addAllNetworks(){
+        // Start AsyncTask to add all networks.
+        new AddAllTask().execute();
     }
 
     public void onClickRemoveAllNetworks(View view){
@@ -223,9 +268,66 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         df.show(this.getFragmentManager(),"");
     }
 
+    private class RemoveAllTask extends AsyncTask<Void, Integer, Void> {
+        ProgressDialog progress;
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            // Update progressbar
+            progress.setProgress(values[0]);
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            // Remove all networks from network configuration
+            // WARNING: This could cause some performance issues depending of the number of networks and saved networks.
+            int i = 0;
+            WifiManager wmAsync = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            List<WifiConfiguration> wificonf = wmAsync.getConfiguredNetworks();
+            for(Network n: networks){
+                if(n.active){
+                    n.active = false;
+                    if(wificonf != null) {
+                        for (WifiConfiguration wc : wificonf) {
+                            if (wc.SSID.equals(n.ssid)) {
+                                wmAsync.removeNetwork(wc.networkId);
+                            }
+                        }
+                    }
+                }
+                i++;
+                publishProgress(i);
+            }
+            // Save configuration
+            wmAsync.saveConfiguration();
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            // Create ProgressDialog and show it
+            progress = new ProgressDialog(MainActivity.this);
+            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            progress.setIndeterminate(false);
+            progress.setMax(networks.size());
+            progress.setCancelable(false);
+            progress.show();
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            // Notify the NetworkAdapter that the content of ArrayList networks was changed.
+            na.notifyDataSetChanged();
+            // Close ProgressDialog
+            progress.cancel();
+        }
+    }
     public void removeAllNetworks(){
         // WARNING: This could cause some performance issues depending of the number of networks and saved networks.
-        for(Network n: networks){
+        /*for(Network n: networks){
             if(n.active){
                 n.active = false;
                 List<WifiConfiguration> wificonf = wm.getConfiguredNetworks();
@@ -241,7 +343,8 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         // Save configuration
         wm.saveConfiguration();
         // Notify the NetworkAdapter that the content of ArrayList networks was changed.
-        na.notifyDataSetChanged();
+        na.notifyDataSetChanged();*/
+        new RemoveAllTask().execute();
     }
 
     private void setupUI(){
