@@ -199,7 +199,6 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
     public void onClickAddAllNetworks(View view){
         AddAllDialogFragment df = new AddAllDialogFragment();
-        df.setListener(this);
         df.show(this.getFragmentManager(),"");
     }
 
@@ -264,7 +263,6 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
     public void onClickRemoveAllNetworks(View view){
         RemoveAllDialogFragment df = new RemoveAllDialogFragment();
-        df.setListener(this);
         df.show(this.getFragmentManager(),"");
     }
 

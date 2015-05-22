@@ -16,12 +16,6 @@ public class RemoveAllDialogFragment extends DialogFragment {
        public void removeAllNetworks();
    }
 
-    private OnRemoveAllListener oral;
-
-    public void setListener(OnRemoveAllListener oral){
-        this.oral = oral;
-    }
-
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
@@ -29,7 +23,7 @@ public class RemoveAllDialogFragment extends DialogFragment {
         builder.setMessage(R.string.dialog_remove_all)
                 .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        oral.removeAllNetworks();
+                        ((OnRemoveAllListener)getActivity()).removeAllNetworks();
                     }
                 })
                 .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {

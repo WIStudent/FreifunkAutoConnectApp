@@ -17,12 +17,6 @@ public class AddAllDialogFragment extends DialogFragment {
         public void addAllNetworks();
     }
 
-    private OnAddAllListener oaal;
-
-    public void setListener(OnAddAllListener oaal){
-        this.oaal = oaal;
-    }
-
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
@@ -30,7 +24,7 @@ public class AddAllDialogFragment extends DialogFragment {
         builder.setMessage(R.string.dialog_add_all)
                 .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        oaal.addAllNetworks();
+                        ((OnAddAllListener)getActivity()).addAllNetworks();
                     }
                 })
                 .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
