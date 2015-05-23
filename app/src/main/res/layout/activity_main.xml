@@ -5,13 +5,10 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context=".MainActivity">
 
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="?attr/actionBarSize"
-        style="@style/Widget.MyApp.ActionBar"/>
 
+    <include
+        android:id="@+id/toolbar"
+        layout="@layout/toolbar" />
 
     <TableLayout
         android:id="@+id/tableLayout"

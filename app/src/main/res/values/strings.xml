@@ -9,4 +9,12 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="action_info">Info</string>
+    <string name="title_activity_info">Info</string>
+    <string name="version">Version:&#160;</string>
+    <string name="developed_by">Developed by:&#160;</string>
+    <string name="tobias_trumm">Tobias Trumm</string>
+    <string name="licence">Licensed under GPLv3</string>
+    <string name="freifunk_logo">Freifunk Logo: <a href="http://freifunk.net/">freifunk.net</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a></string>
+    <string name="sourcecode"><a href="https://github.com/WIStudent/FreifunkAutoConnectApp">Get the source code</a></string>
+    <string name="placeholder">Placeholder</string>
 </resources>

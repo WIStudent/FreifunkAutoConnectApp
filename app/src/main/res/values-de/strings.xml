@@ -8,4 +8,8 @@
     <string name="dialog_add_all">Sollen alle Netzwerke hinzugefügt werden?</string>
     <string name="yes">Ja</string>
     <string name="no">Nein</string>
+    <string name="developed_by">Entwickelt von:&#160;</string>
+    <string name="licence">Lizenziert unter GPLv3</string>
+    <string name="freifunk_logo">Freifunk Logo: <a href="http://freifunk.net/">freifunk.net</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a></string>
+    <string name="sourcecode"><a href="https://github.com/WIStudent/FreifunkAutoConnectApp">Hole dir den Source Code</a></string>
 </resources>

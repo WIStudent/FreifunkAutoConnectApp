@@ -3,6 +3,7 @@ package com.example.tobiastrumm.freifunkautoconnect;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
@@ -191,6 +192,8 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_info) {
+            Intent intent = new Intent(MainActivity.this, InfoActivity.class);
+            startActivity(intent);
             return true;
         }
 
