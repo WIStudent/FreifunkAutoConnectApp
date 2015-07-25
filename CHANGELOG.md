@@ -1,5 +1,13 @@
 # Change Log
 
+## [unreleased] [unreleased]
+### Added
+- New SSIDs.
+
+### Changed
+- SSIDs will now be sorted by the app on start up.
+- Rewrote some loops to be more efficient.
+
 ## [0.2] - 2015-05-24
 ### Added
 - More SSIDs.

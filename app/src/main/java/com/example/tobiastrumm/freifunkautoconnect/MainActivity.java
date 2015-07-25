@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
-import android.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -21,6 +20,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.SearchView;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -80,8 +81,8 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             else{
                 Log.w(TAG, "Could not find or create user_ssids file.");
             }
-
         }
+        Collections.sort(networks);
     }
 
     private File createUserSSIDFile(){
@@ -207,6 +208,8 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
     private class AddAllTask extends AsyncTask<Void, Integer, Void> {
         ProgressDialog progress;
+        long timeStart;
+
         @Override
         protected void onProgressUpdate(Integer... values) {
             super.onProgressUpdate(values);
@@ -240,6 +243,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            timeStart = System.currentTimeMillis();
             // Create ProgressDialog and show it
             progress = new ProgressDialog(MainActivity.this);
             progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -256,6 +260,8 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             na.notifyDataSetChanged();
             // Close ProgressDialog
             progress.cancel();
+            long timeEnd = System.currentTimeMillis();
+            Log.d(TAG, "Duration add all networks: " + (timeEnd - timeStart) + "ms");
         }
     }
 
@@ -271,6 +277,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
     private class RemoveAllTask extends AsyncTask<Void, Integer, Void> {
         ProgressDialog progress;
+        long timeStart;
 
         @Override
         protected void onProgressUpdate(Integer... values) {
@@ -286,14 +293,16 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             int i = 0;
             WifiManager wmAsync = (WifiManager) getSystemService(Context.WIFI_SERVICE);
             List<WifiConfiguration> wificonf = wmAsync.getConfiguredNetworks();
+            if(wificonf != null) {
+                Collections.sort(wificonf, new WifiConfigurationComparator());
+            }
             for(Network n: networks){
                 if(n.active){
                     n.active = false;
                     if(wificonf != null) {
-                        for (WifiConfiguration wc : wificonf) {
-                            if (wc.SSID.equals(n.ssid)) {
-                                wmAsync.removeNetwork(wc.networkId);
-                            }
+                        int index = Collections.binarySearch(wificonf, n.ssid, new WifiConfigurationSSIDComparator());
+                        if(index >= 0) {
+                            wmAsync.removeNetwork(wificonf.get(index).networkId);
                         }
                     }
                 }
@@ -308,6 +317,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+            timeStart = System.currentTimeMillis();
             // Create ProgressDialog and show it
             progress = new ProgressDialog(MainActivity.this);
             progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -324,27 +334,11 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             na.notifyDataSetChanged();
             // Close ProgressDialog
             progress.cancel();
+            long timeEnd = System.currentTimeMillis();
+            Log.d(TAG, "Duration remove all networks: " + (timeEnd-timeStart) + "ms");
         }
     }
     public void removeAllNetworks(){
-        // WARNING: This could cause some performance issues depending of the number of networks and saved networks.
-        /*for(Network n: networks){
-            if(n.active){
-                n.active = false;
-                List<WifiConfiguration> wificonf = wm.getConfiguredNetworks();
-                if(wificonf != null) {
-                    for (WifiConfiguration wc : wificonf) {
-                        if (wc.SSID.equals(n.ssid)) {
-                            wm.removeNetwork(wc.networkId);
-                        }
-                    }
-                }
-            }
-        }
-        // Save configuration
-        wm.saveConfiguration();
-        // Notify the NetworkAdapter that the content of ArrayList networks was changed.
-        na.notifyDataSetChanged();*/
         new RemoveAllTask().execute();
     }
 
@@ -358,16 +352,19 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     private void checkActiveNetworks(){
         // Check which Network is already added to the network configuration
         // WARNING: Could cause performance issues for large lists of networks and network configurations
+
         List<WifiConfiguration> wifiConf = wm.getConfiguredNetworks();
         if(wifiConf != null) {
+            long timeStart = System.currentTimeMillis();
+            Collections.sort(wifiConf, new WifiConfigurationComparator());
             for (Network n : networks) {
-                n.active = false;
-                for (WifiConfiguration wc : wifiConf) {
-                    if (wc.SSID.equals(n.ssid)) {
-                        n.active = true;
-                    }
-                }
+                // Search for the current network in the network configuration. If it is found (index will be >= 0), set active to true
+                int index = Collections.binarySearch(wifiConf, n.ssid, new WifiConfigurationSSIDComparator());
+                n.active = index >= 0;
             }
+
+            long timeEnd = System.currentTimeMillis();
+            Log.d(TAG, "Duration checkActiveNetworks: " + (timeEnd - timeStart) + "ms");
             na.notifyDataSetChanged();
         }
 
@@ -405,3 +402,4 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         na.notifyDataSetChanged();
     }
 }
+
