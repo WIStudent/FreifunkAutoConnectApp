@@ -14,6 +14,9 @@ public class Network implements Comparable<Network>{
 
     @Override
     public int compareTo(Network o) {
-        return ssid.compareToIgnoreCase(o.ssid);
+        // Cut of the quotation marks before compairing the SSIDs.
+        String ssid1 = ssid.substring(1,ssid.length()-1);
+        String ssid2 = o.ssid.substring(1, o.ssid.length()-1);
+        return ssid1.compareToIgnoreCase(ssid2);
     }
 }
