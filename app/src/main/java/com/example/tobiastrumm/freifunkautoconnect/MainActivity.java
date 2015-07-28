@@ -1,16 +1,19 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
+import android.app.ActivityManager;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
@@ -37,8 +40,11 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     private static String DIRECTORY = "freifunkautoconnect";
     private static String USER_SSIDS_FILE = "user_ssids.csv";
 
-    private static String TAG = MainActivity.class.getSimpleName();
+    private static final String STATE_PROGRESSBAR_RUNNING = "state_progressbar_running";
+    private static final String STATE_PROGRESSBAR_MAX = "state_progressbar_max";
+    private static final String STATE_PROGRESSBAR_PROGRESS = "state_progressbar_progress";
 
+    private static String TAG = MainActivity.class.getSimpleName();
 
     private ArrayList<Network> networks;
 
@@ -46,7 +52,59 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     private NetworkAdapter na;
     private WifiManager wm;
 
+    private ProgressDialog progress;
+    private int progressBarMax;
+    private int progressBarProgress;
+    private boolean progressBarRunning = false;
 
+
+    private class AddAllNetworksResponseReceiver extends BroadcastReceiver{
+        private AddAllNetworksResponseReceiver(){}
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch(intent.getStringExtra(AddAllNetworksService.STATUS_TYPE)){
+                case AddAllNetworksService.STATUS_TYPE_FINISHED:
+                    checkActiveNetworks();
+                    if(progress != null){
+                        progress.cancel();
+                    }
+                    progressBarRunning = false;
+                    break;
+
+                case AddAllNetworksService.STATUS_TYPE_PROGRESS:
+                    progressBarProgress = intent.getIntExtra(AddAllNetworksService.STATUS_PROGRESS, 0);
+                    if(progress != null) {
+                        progress.setProgress(progressBarProgress);
+                    }
+                    break;
+            }
+        }
+    }
+
+    private class RemoveAllNetworksResponseReceiver extends BroadcastReceiver{
+        private RemoveAllNetworksResponseReceiver(){}
+
+        @Override
+        public void onReceive(Context context, Intent intent){
+            switch(intent.getStringExtra(RemoveAllNetworksService.STATUS_TYPE)){
+                case RemoveAllNetworksService.STATUS_TYPE_FINISHED:
+                    checkActiveNetworks();
+                    if(progress != null){
+                        progress.cancel();
+                    }
+                    progressBarRunning = false;
+                    break;
+
+                case RemoveAllNetworksService.STATUS_TYPE_PROGRESS:
+                    progressBarProgress = intent.getIntExtra(RemoveAllNetworksService.STATUS_PROGRESS, 0);
+                    if(progress != null){
+                        progress.setProgress(progressBarProgress);
+                    }
+                    break;
+            }
+        }
+    }
 
     private void getSSIDs() throws IOException {
         InputStreamReader is = new InputStreamReader(getAssets().open("ssids.csv"));
@@ -127,6 +185,25 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Recreate ProgressBar if screen was rotated.
+        if(savedInstanceState != null){
+            progressBarRunning = savedInstanceState.getBoolean(STATE_PROGRESSBAR_RUNNING);
+            // Don't recreate the progress dialog if the service has stopped running while the activity was recreated.
+            if(progressBarRunning && (isAddAllNetworkServiceRunning() || isRemoveAllNetworkServiceRunning())){
+                progressBarMax = savedInstanceState.getInt(STATE_PROGRESSBAR_MAX);
+                progressBarProgress = savedInstanceState.getInt(STATE_PROGRESSBAR_PROGRESS);
+                startProgressDialog(progressBarMax);
+            }
+        }
+
+        IntentFilter addAllIntentFilter = new IntentFilter(AddAllNetworksService.BROADCAST_ACTION);
+        AddAllNetworksResponseReceiver addAllNetworksResponseReceiver = new AddAllNetworksResponseReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(addAllNetworksResponseReceiver, addAllIntentFilter);
+
+        IntentFilter removeAllIntentFilter = new IntentFilter(RemoveAllNetworksService.BROADCAST_ACTION);
+        RemoveAllNetworksResponseReceiver removeAllNetworksResponseReceiver = new RemoveAllNetworksResponseReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(removeAllNetworksResponseReceiver, removeAllIntentFilter);
+
 
         // Use Toolbar instead of ActionBar. See:
         // http://blog.xamarin.com/android-tips-hello-toolbar-goodbye-action-bar/
@@ -142,7 +219,6 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             // Could not read SSIDs from csv file.
         }
 
-
         wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         setupUI();
 
@@ -151,13 +227,26 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     @Override
     protected void onStart() {
         super.onStart();
-
         // Check which Networks are already saved in the network configuration
-        // TODO: Run this check asynchronous from UI thread
         checkActiveNetworks();
-
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putBoolean(STATE_PROGRESSBAR_RUNNING, progressBarRunning);
+        savedInstanceState.putInt(STATE_PROGRESSBAR_MAX, progressBarMax);
+        savedInstanceState.putInt(STATE_PROGRESSBAR_PROGRESS, progressBarProgress);
+
+        super.onSaveInstanceState(savedInstanceState);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if(progress != null){
+            progress.dismiss();
+        }
+        super.onDestroy();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -206,140 +295,41 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         df.show(this.getFragmentManager(),"");
     }
 
-    private class AddAllTask extends AsyncTask<Void, Integer, Void> {
-        ProgressDialog progress;
-        long timeStart;
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-            // Update progressbar
-            progress.setProgress(values[0]);
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            // Add all networks to network configuration
-            int i = 0;
-            WifiManager wmAsync = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-            for(Network n: networks){
-                if(!n.active){
-                    n.active = true;
-                    // Create WifiConfiguration and add it to the known networks.
-                    WifiConfiguration wc = new WifiConfiguration();
-                    wc.SSID = n.ssid;
-                    wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-                    int networkId = wmAsync.addNetwork(wc);
-                    wmAsync.enableNetwork(networkId, false);
-                }
-                i++;
-                publishProgress(i);
-            }
-            // Save configuration
-            wmAsync.saveConfiguration();
-            return null;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            timeStart = System.currentTimeMillis();
-            // Create ProgressDialog and show it
-            progress = new ProgressDialog(MainActivity.this);
-            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            progress.setIndeterminate(false);
-            progress.setMax(networks.size());
-            progress.setCancelable(false);
-            progress.show();
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            // Notify the NetworkAdapter that the content of ArrayList networks was changed.
-            na.notifyDataSetChanged();
-            // Close ProgressDialog
-            progress.cancel();
-            long timeEnd = System.currentTimeMillis();
-            Log.d(TAG, "Duration add all networks: " + (timeEnd - timeStart) + "ms");
-        }
+    private void startProgressDialog(int maxValue){
+        progress = new ProgressDialog(MainActivity.this);
+        progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progress.setIndeterminate(false);
+        progress.setMax(maxValue);
+        progress.setCancelable(false);
+        progress.show();
+        progressBarRunning = true;
     }
 
     public void addAllNetworks(){
-        // Start AsyncTask to add all networks.
-        new AddAllTask().execute();
+        // Create ProgressDialog and show it
+        progressBarMax = networks.size();
+        startProgressDialog(progressBarMax);
+
+        //Start AddAllNetworksService
+        Intent intent = new Intent(this, AddAllNetworksService.class);
+        intent.putParcelableArrayListExtra(AddAllNetworksService.INPUT_NETWORKS, networks);
+        startService(intent);
     }
 
     public void onClickRemoveAllNetworks(View view){
         RemoveAllDialogFragment df = new RemoveAllDialogFragment();
         df.show(this.getFragmentManager(),"");
     }
-
-    private class RemoveAllTask extends AsyncTask<Void, Integer, Void> {
-        ProgressDialog progress;
-        long timeStart;
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-            // Update progressbar
-            progress.setProgress(values[0]);
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            // Remove all networks from network configuration
-            // WARNING: This could cause some performance issues depending of the number of networks and saved networks.
-            int i = 0;
-            WifiManager wmAsync = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-            List<WifiConfiguration> wificonf = wmAsync.getConfiguredNetworks();
-            if(wificonf != null) {
-                Collections.sort(wificonf, new WifiConfigurationComparator());
-            }
-            for(Network n: networks){
-                if(n.active){
-                    n.active = false;
-                    if(wificonf != null) {
-                        int index = Collections.binarySearch(wificonf, n.ssid, new WifiConfigurationSSIDComparator());
-                        if(index >= 0) {
-                            wmAsync.removeNetwork(wificonf.get(index).networkId);
-                        }
-                    }
-                }
-                i++;
-                publishProgress(i);
-            }
-            // Save configuration
-            wmAsync.saveConfiguration();
-            return null;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            timeStart = System.currentTimeMillis();
-            // Create ProgressDialog and show it
-            progress = new ProgressDialog(MainActivity.this);
-            progress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            progress.setIndeterminate(false);
-            progress.setMax(networks.size());
-            progress.setCancelable(false);
-            progress.show();
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            // Notify the NetworkAdapter that the content of ArrayList networks was changed.
-            na.notifyDataSetChanged();
-            // Close ProgressDialog
-            progress.cancel();
-            long timeEnd = System.currentTimeMillis();
-            Log.d(TAG, "Duration remove all networks: " + (timeEnd-timeStart) + "ms");
-        }
-    }
+    
     public void removeAllNetworks(){
-        new RemoveAllTask().execute();
+        // Create ProgressDialog and show it
+        progressBarMax = networks.size();
+        startProgressDialog(progressBarMax);
+
+        //Start RemoveAllNetworksService
+        Intent intent = new Intent(this, RemoveAllNetworksService.class);
+        intent.putParcelableArrayListExtra(RemoveAllNetworksService.INPUT_NETWORKS, networks);
+        startService(intent);
     }
 
     private void setupUI(){
@@ -400,6 +390,26 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         wm.saveConfiguration();
         // Notify the NetworkAdapter that the content of ArrayList networks was changed.
         na.notifyDataSetChanged();
+    }
+
+    private boolean isAddAllNetworkServiceRunning(){
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (AddAllNetworksService.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isRemoveAllNetworkServiceRunning(){
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        for( ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if(RemoveAllNetworksService.class.getName().equals((service.service.getClassName()))) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 

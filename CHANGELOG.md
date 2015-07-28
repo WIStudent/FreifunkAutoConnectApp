@@ -8,6 +8,9 @@
 - SSIDs will now be sorted by the app on start up.
 - Rewrote some loops to be more efficient.
 
+### Fixed
+- App won't crash anymore if screen is rotated while process dialog is shown.
+
 ## [0.2] - 2015-05-24
 ### Added
 - More SSIDs.

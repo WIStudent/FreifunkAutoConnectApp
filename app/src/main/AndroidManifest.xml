@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.tobiastrumm.freifunkautoconnect">
+    package="com.example.tobiastrumm.freifunkautoconnect" >
 
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
@@ -33,6 +33,12 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.tobiastrumm.freifunkautoconnect.MainActivity" />
         </activity>
+        <service
+            android:name=".AddAllNetworksService"
+            android:exported="false" />
+        <service
+            android:name=".RemoveAllNetworksService"
+            android:exported="false" />
     </application>
 
 </manifest>
