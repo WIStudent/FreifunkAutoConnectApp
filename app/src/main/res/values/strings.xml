@@ -19,4 +19,11 @@
     <string name="freifunk_logo">Freifunk Logo: <a href="http://freifunk.net/">freifunk.net</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a></string>
     <string name="sourcecode"><a href="https://github.com/WIStudent/FreifunkAutoConnectApp">Get the source code</a></string>
     <string name="placeholder">Placeholder</string>
+    <string name="settings">Settings</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="action_settings">Settings</string>
+    <string name="pref_notification">Notification</string>
+    <string name="pref_notification_summ">Notify me, when a Freifunk network is in reach.</string>
+    <string name="notification_title">Freifunk in reach</string>
+    <string name="notification_text">Networks:&#160;</string>
 </resources>

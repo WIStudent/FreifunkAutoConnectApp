@@ -7,12 +7,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBarActivity;
@@ -37,8 +39,8 @@ import java.util.List;
 
 public class MainActivity extends ActionBarActivity implements AdapterView.OnItemClickListener, RemoveAllDialogFragment.OnRemoveAllListener, AddAllDialogFragment.OnAddAllListener{
 
-    private static String DIRECTORY = "freifunkautoconnect";
-    private static String USER_SSIDS_FILE = "user_ssids.csv";
+    public static String DIRECTORY = "freifunkautoconnect";
+    public static String USER_SSIDS_FILE = "user_ssids.csv";
 
     private static final String STATE_PROGRESSBAR_RUNNING = "state_progressbar_running";
     private static final String STATE_PROGRESSBAR_MAX = "state_progressbar_max";
@@ -222,6 +224,13 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         setupUI();
 
+        // Start NotificationService if it should running but isn't
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean notifications = sharedPref.getBoolean("pref_notification", false);
+        if(notifications && !isNotificationServiceRunning()){
+            startService(new Intent(this, NotificationService.class));
+        }
+
     }
 
     @Override
@@ -287,6 +296,13 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             return true;
         }
 
+        else if (id == R.id.action_settings){
+            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
+        }
+
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -318,9 +334,9 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
     public void onClickRemoveAllNetworks(View view){
         RemoveAllDialogFragment df = new RemoveAllDialogFragment();
-        df.show(this.getFragmentManager(),"");
+        df.show(this.getFragmentManager(), "");
     }
-    
+
     public void removeAllNetworks(){
         // Create ProgressDialog and show it
         progressBarMax = networks.size();
@@ -406,6 +422,16 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         for( ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if(RemoveAllNetworksService.class.getName().equals((service.service.getClassName()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isNotificationServiceRunning(){
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        for ( ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if(NotificationService.class.getName().equals(service.service.getClassName())) {
                 return true;
             }
         }

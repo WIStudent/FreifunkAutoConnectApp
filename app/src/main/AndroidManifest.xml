@@ -33,12 +33,25 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.tobiastrumm.freifunkautoconnect.MainActivity" />
         </activity>
+
         <service
             android:name=".AddAllNetworksService"
             android:exported="false" />
         <service
             android:name=".RemoveAllNetworksService"
             android:exported="false" />
+        <service
+            android:name=".NotificationService"
+            android:exported="false" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.tobiastrumm.freifunkautoconnect.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

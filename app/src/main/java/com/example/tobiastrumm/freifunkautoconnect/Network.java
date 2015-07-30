@@ -24,6 +24,22 @@ public class Network implements Comparable<Network>, Parcelable{
     }
 
     @Override
+    public int hashCode() {
+        return ssid.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(!(o instanceof Network)){
+            return false;
+        }
+        if(o == this){
+            return true;
+        }
+        return hashCode() == ((Network)o).hashCode();
+    }
+
+    @Override
     public int describeContents() {
         return 0;
     }

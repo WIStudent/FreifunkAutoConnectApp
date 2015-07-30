@@ -3,6 +3,7 @@
 ## [unreleased] [unreleased]
 ### Added
 - New SSIDs.
+- Option to notify the user if a freifunk network is available.
 
 ### Changed
 - SSIDs will now be sorted by the app on start up.

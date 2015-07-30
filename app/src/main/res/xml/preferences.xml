@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <SwitchPreference
+        android:key="pref_notification"
+        android:title="@string/pref_notification"
+        android:summary="@string/pref_notification_summ"
+        android:defaultValue="false" />
+</PreferenceScreen>
