@@ -1,6 +1,6 @@
 # Change Log
 
-## [unreleased] [unreleased]
+## [0.3] - 2015-07-30
 ### Added
 - New SSIDs.
 - Option to notify the user if a freifunk network is available.
