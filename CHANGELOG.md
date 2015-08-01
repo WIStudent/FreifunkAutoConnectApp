@@ -1,5 +1,9 @@
 # Change Log
 
+## [unreleased][unreleased]
+### Fixed
+- Restart NotificationService if device was rebooted.
+
 ## [0.3] - 2015-07-30
 ### Added
 - New SSIDs.
