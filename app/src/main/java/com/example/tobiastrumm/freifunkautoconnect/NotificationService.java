@@ -1,5 +1,6 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -7,10 +8,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Environment;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -45,7 +50,8 @@ public class NotificationService extends Service {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive was called");
-            boolean alreadyConnected = false;
+            boolean alreadyConnectedToFreifunk = false;
+            boolean alreadyConnectedToAnyNetwork = false;
 
             WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
             List<ScanResult> results = wm.getScanResults();
@@ -61,13 +67,18 @@ public class NotificationService extends Service {
                     }
                 }
 
+                // Look if device is already connected to a network
+                ConnectivityManager connMan = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo mwifi = connMan.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                alreadyConnectedToAnyNetwork = mwifi.isConnectedOrConnecting();
+
                 // Look if device is already connected to a known Freifunk network
                 String currentSSID = wm.getConnectionInfo().getSSID();
                 if(currentSSID != null){
                     Log.d(TAG, "Check if " + currentSSID + " is a Freifunk network");
                     Network compareWith = new Network(currentSSID);
                     if(foundNetworks.contains(compareWith)){
-                        alreadyConnected = true;
+                        alreadyConnectedToFreifunk = true;
                         Log.d(TAG, "Already connected with " + compareWith.ssid);
                     }
                 }
@@ -87,12 +98,12 @@ public class NotificationService extends Service {
                 }
                 Log.d(TAG, "Old Found networks: " + oldfoundNetworksStr);
 
-                Log.d(TAG, "!isEmpty: " + !foundNetworks.isEmpty() + " !sameResults: " + !sameResults + " !alreadyConnected: " + !alreadyConnected);
+                Log.d(TAG, "!isEmpty: " + !foundNetworks.isEmpty() + " !sameResults: " + !sameResults + " !alreadyConnectedToFreifunk: " + !alreadyConnectedToFreifunk +  " !(alreadyConnectedToAnyNetwork && NoNotificationIfConnected): " + !(alreadyConnectedToAnyNetwork && PreferenceManager.getDefaultSharedPreferences(NotificationService.this).getBoolean("pref_no_notification_connected", false)));
                 // Cancel the notification if no Freifunk network is in reach anymore.
                 if(foundNetworks.isEmpty()){
                     mNotificationManager.cancel(NOTIFICATION_ID);
                 }
-                if(!foundNetworks.isEmpty() && !sameResults && !alreadyConnected){
+                if(!foundNetworks.isEmpty() && !sameResults && !alreadyConnectedToFreifunk && !(alreadyConnectedToAnyNetwork && PreferenceManager.getDefaultSharedPreferences(NotificationService.this).getBoolean("pref_no_notification_connected", false))){
                     sendNotification(foundNetworks);
                     Log.d(TAG, "sendNotification was called");
                 }
@@ -112,6 +123,22 @@ public class NotificationService extends Service {
                             .setContentTitle(getString(R.string.notification_title))
                             .setContentText(text)
                             .setContentIntent(PendingIntent.getActivity(NotificationService.this,0, new Intent(Settings.ACTION_WIFI_SETTINGS),0));
+
+            SharedPreferences prefMan = PreferenceManager.getDefaultSharedPreferences(NotificationService.this);
+            boolean vibrate = prefMan.getBoolean("pref_notification_vibrate", true);
+            boolean playSound = prefMan.getBoolean("pref_notification_sound", false);
+            if(vibrate && playSound){
+                mBuilder.setDefaults(Notification.DEFAULT_ALL);
+            }
+            else if(!vibrate && playSound){
+                mBuilder.setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND);
+            }
+            else if(vibrate && !playSound){
+                mBuilder.setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE);
+            }
+            else{
+                mBuilder.setDefaults(Notification.DEFAULT_LIGHTS);
+            }
 
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
             Log.d(TAG, "Notification was sent.");

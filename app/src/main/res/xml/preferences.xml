@@ -1,8 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <SwitchPreference
-        android:key="pref_notification"
-        android:title="@string/pref_notification"
-        android:summary="@string/pref_notification_summ"
-        android:defaultValue="false" />
+    <PreferenceCategory
+        android:title="@string/pref_notification" >
+        <SwitchPreference
+            android:key="pref_notification"
+            android:title="@string/pref_notification"
+            android:summary="@string/pref_notification_summ"
+            android:defaultValue="false" />
+        <SwitchPreference
+            android:key="pref_no_notification_connected"
+            android:title="@string/pref_no_notification_connected"
+            android:summary="@string/pref_no_notification_connected_summ"
+            android:defaultValue="true" />
+        <SwitchPreference
+            android:key="pref_notification_vibrate"
+            android:title="@string/pref_notification_vibrate"
+            android:defaultValue="true" />
+        <SwitchPreference
+            android:key="pref_notification_sound"
+            android:title="@string/pref_notification_sound"
+            android:defaultValue="false" />
+    </PreferenceCategory>
 </PreferenceScreen>

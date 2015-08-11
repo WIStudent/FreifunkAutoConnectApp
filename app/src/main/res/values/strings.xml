@@ -26,4 +26,8 @@
     <string name="pref_notification_summ">Notify me, when a Freifunk network is in reach.</string>
     <string name="notification_title">Freifunk in reach</string>
     <string name="notification_text">Networks:&#160;</string>
+    <string name="pref_no_notification_connected">Don\'t notify if connected to WiFi</string>
+    <string name="pref_no_notification_connected_summ">You will not get notified about any Freifunk network if you are already connected to a WiFi network</string>
+    <string name="pref_notification_vibrate">Vibrate</string>
+    <string name="pref_notification_sound">Play sound</string>
 </resources>

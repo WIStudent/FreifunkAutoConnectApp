@@ -19,4 +19,8 @@
     <string name="pref_notification_summ">Benachrichtige mich, wenn ein Freifunk-Netz in Reichweite ist.</string>
     <string name="notification_title">Freifunk in Reichweite</string>
     <string name="notification_text">Netzwerke:&#160;</string>
+    <string name="pref_no_notification_connected">Keine Benachrichtigung wenn mit WLAN verbunden</string>
+    <string name="pref_no_notification_connected_summ">Du wirst über Freifunk-Netze nicht benachrichtigt, wenn das Gerät bereits mit einem WLAN verbunden ist.</string>
+    <string name="pref_notification_vibrate">Vibrieren</string>
+    <string name="pref_notification_sound">Benachrichtigungston abspielen</string>
 </resources>

@@ -1,8 +1,12 @@
 # Change Log
 
 ## [unreleased][unreleased]
+### Changed
+- Improved notification settings.
+
 ### Fixed
 - Restart NotificationService if device was rebooted.
+- Don't create a new SettingsFragment on top the existing SettingsFragment if the screen is rotated.
 
 ## [0.3] - 2015-07-30
 ### Added
