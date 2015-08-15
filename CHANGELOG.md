@@ -1,6 +1,6 @@
 # Change Log
 
-## [unreleased][unreleased]
+## [0.4] 2015-08-15
 ### Changed
 - Improved notification settings.
 
