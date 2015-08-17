@@ -9,3 +9,9 @@ The Freifunk Auto Connect App makes it easier to add multiple Freifunk SSIDs to 
 ## Build status
 Build status on [Travis CI](https://travis-ci.org/):
 [![Build Status](https://travis-ci.org/WIStudent/FreifunkAutoConnectApp.svg?branch=master)](https://travis-ci.org/WIStudent/FreifunkAutoConnectApp)
+
+## Availability in stores
+
+This app is already available at F-Droid:
+
+[![Matekarte on F-Droid](https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=https://f-droid.org/app/com.example.tobiastrumm.freifunkautoconnect&choe=UTF-8)](https://f-droid.org/app/com.example.tobiastrumm.freifunkautoconnect)
