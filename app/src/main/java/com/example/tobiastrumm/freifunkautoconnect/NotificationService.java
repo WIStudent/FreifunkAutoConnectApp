@@ -63,7 +63,10 @@ public class NotificationService extends Service {
                 for(ScanResult r: results){
                     Network compareWith = new Network('"' + r.SSID + '"');
                     if(networks.contains(compareWith)){
-                        foundNetworks.add(compareWith);
+                        if(!foundNetworks.contains(compareWith)){
+                            foundNetworks.add(compareWith);
+                        }
+
                     }
                 }
 
