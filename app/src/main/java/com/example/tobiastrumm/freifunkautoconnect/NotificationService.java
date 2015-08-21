@@ -125,6 +125,7 @@ public class NotificationService extends Service {
                             .setSmallIcon(R.mipmap.ic_wifi_white_48dp)
                             .setContentTitle(getString(R.string.notification_title))
                             .setContentText(text)
+                            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                             .setContentIntent(PendingIntent.getActivity(NotificationService.this,0, new Intent(Settings.ACTION_WIFI_SETTINGS),0));
 
             SharedPreferences prefMan = PreferenceManager.getDefaultSharedPreferences(NotificationService.this);
