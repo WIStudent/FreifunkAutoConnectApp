@@ -27,10 +27,16 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SearchView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -108,13 +114,67 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         }
     }
 
+    private class DownloadSsidJsonResponseReceiver extends BroadcastReceiver{
+        private DownloadSsidJsonResponseReceiver(){}
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch(intent.getStringExtra(DownloadSsidJsonService.STATUS_TYPE)){
+                case DownloadSsidJsonService.STATUS_TYPE_REPLACED:
+                    try {
+                        // Read ssid from file again and notify ArrayAdapter na that the dataset was changed.
+                        getSSIDs();
+                        na.notifyDataSetChanged();
+                        Log.d(TAG, "SSIDs were refreshed");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+            }
+        }
+    }
+
     private void getSSIDs() throws IOException {
-        InputStreamReader is = new InputStreamReader(getAssets().open("ssids.csv"));
+        // Check if ssids.json exists in internal storage.
+        File ssidsJson = getFileStreamPath("ssids.json");
+        if(!ssidsJson.exists()){
+            Log.d(TAG, "Copy ssids.json to internal storage.");
+            // If not, copy ssids.json from assets to internal storage.
+            FileOutputStream outputStream = openFileOutput("ssids.json", Context.MODE_PRIVATE);
+            InputStream inputStream = getAssets().open("ssids.json");
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while((bytesRead = inputStream.read(buffer)) != -1){
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            inputStream.close();
+            outputStream.close();
+            Log.d(TAG, "Finished copying ssids.json to internal storage");
+        }
+
+        // Read ssids.json from internal storage.
+        String jsonString = "";
+        InputStreamReader is = new InputStreamReader(new FileInputStream(ssidsJson));
         BufferedReader reader = new BufferedReader(is);
         String line;
         while ((line = reader.readLine()) != null) {
-            networks.add(new Network(line));
+            //networks.add(new Network(line));
+            jsonString += line;
         }
+        reader.close();
+
+        // Read SSIDs from JSON file
+        try {
+            JSONObject json = new JSONObject(jsonString);
+            JSONArray ssidsJsonArray = json.getJSONArray("ssids");
+            for(int i = 0; i<ssidsJsonArray.length(); i++){
+                networks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
 
         // Read user defined ssids
         // Check if external storage is available
@@ -206,6 +266,10 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         RemoveAllNetworksResponseReceiver removeAllNetworksResponseReceiver = new RemoveAllNetworksResponseReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(removeAllNetworksResponseReceiver, removeAllIntentFilter);
 
+        IntentFilter downloadSsidJsonIntentFilter = new IntentFilter(DownloadSsidJsonService.BROADCAST_ACTION);
+        DownloadSsidJsonResponseReceiver downloadSsidJsonResponseReceiver = new DownloadSsidJsonResponseReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(downloadSsidJsonResponseReceiver, downloadSsidJsonIntentFilter);
+
 
         // Use Toolbar instead of ActionBar. See:
         // http://blog.xamarin.com/android-tips-hello-toolbar-goodbye-action-bar/
@@ -230,6 +294,10 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         if(notifications && !isNotificationServiceRunning()){
             startService(new Intent(this, NotificationService.class));
         }
+
+        // Start DownloadSsidJsonService to check if a newer ssids.json file is available.
+        Intent intent = new Intent(this, DownloadSsidJsonService.class);
+        startService(intent);
 
     }
 
@@ -438,4 +506,3 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         return false;
     }
 }
-
