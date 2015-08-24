@@ -26,11 +26,18 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SearchView;
+import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -108,13 +115,71 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         }
     }
 
+    private class DownloadSsidJsonResponseReceiver extends BroadcastReceiver{
+        private DownloadSsidJsonResponseReceiver(){}
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch(intent.getStringExtra(DownloadSsidJsonService.STATUS_TYPE)){
+                case DownloadSsidJsonService.STATUS_TYPE_REPLACED:
+                    try {
+                        // Read ssid from file again.
+                        getSSIDs();
+                        checkActiveNetworks();
+                        Log.d(TAG, "SSIDs were refreshed");
+
+                        // Notify user that a new SSID list was downloaded.
+                        Toast toast = Toast.makeText(MainActivity.this, getString(R.string.message_ssids_updated), Toast.LENGTH_LONG);
+                        toast.show();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+            }
+        }
+    }
+
     private void getSSIDs() throws IOException {
-        InputStreamReader is = new InputStreamReader(getAssets().open("ssids.csv"));
+        // Check if ssids.json exists in internal storage.
+        File ssidsJson = getFileStreamPath("ssids.json");
+        if(!ssidsJson.exists()){
+            Log.d(TAG, "Copy ssids.json to internal storage.");
+            // If not, copy ssids.json from assets to internal storage.
+            FileOutputStream outputStream = openFileOutput("ssids.json", Context.MODE_PRIVATE);
+            InputStream inputStream = getAssets().open("ssids.json");
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while((bytesRead = inputStream.read(buffer)) != -1){
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            inputStream.close();
+            outputStream.close();
+            Log.d(TAG, "Finished copying ssids.json to internal storage");
+        }
+
+        // Read ssids.json from internal storage.
+        String jsonString = "";
+        InputStreamReader is = new InputStreamReader(new FileInputStream(ssidsJson));
         BufferedReader reader = new BufferedReader(is);
         String line;
         while ((line = reader.readLine()) != null) {
-            networks.add(new Network(line));
+            jsonString += line;
         }
+        reader.close();
+
+        // Read SSIDs from JSON file
+        networks.clear();
+        try {
+            JSONObject json = new JSONObject(jsonString);
+            JSONArray ssidsJsonArray = json.getJSONArray("ssids");
+            for(int i = 0; i<ssidsJsonArray.length(); i++){
+                networks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
 
         // Read user defined ssids
         // Check if external storage is available
@@ -145,6 +210,22 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         Collections.sort(networks);
     }
 
+    private void checkForNewSsidFile(){
+        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+        long lastCheck = sharedPref.getLong(getString(R.string.preference_timestamp_last_ssid_download), 0);
+        long currentTime = System.currentTimeMillis() / 1000L;
+
+        Log.d(TAG, "Current timestamp: " + currentTime +  " last check timestamp: " + lastCheck);
+
+        if(currentTime - lastCheck > 24*60*60){
+            // Start DownloadSsidJsonService to check if a newer ssids.json file is available.
+            Intent intent = new Intent(this, DownloadSsidJsonService.class);
+            startService(intent);
+        }
+
+
+    }
+
     private File createUserSSIDFile(){
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
@@ -169,7 +250,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             Log.i(TAG, "Scan for user_ssids.csv file");
             MediaScannerConnection.scanFile(
                     this,
-                    new String[]{directory.getAbsolutePath(), user_ssids.getAbsolutePath(), },
+                    new String[]{directory.getAbsolutePath(), user_ssids.getAbsolutePath(),},
                     null,
                     new MediaScannerConnection.OnScanCompletedListener() {
                         public void onScanCompleted(String path, Uri uri) {
@@ -180,6 +261,20 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             );
         }
         return null;
+    }
+
+    private void setupBroadcastReceivers(){
+        IntentFilter addAllIntentFilter = new IntentFilter(AddAllNetworksService.BROADCAST_ACTION);
+        AddAllNetworksResponseReceiver addAllNetworksResponseReceiver = new AddAllNetworksResponseReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(addAllNetworksResponseReceiver, addAllIntentFilter);
+
+        IntentFilter removeAllIntentFilter = new IntentFilter(RemoveAllNetworksService.BROADCAST_ACTION);
+        RemoveAllNetworksResponseReceiver removeAllNetworksResponseReceiver = new RemoveAllNetworksResponseReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(removeAllNetworksResponseReceiver, removeAllIntentFilter);
+
+        IntentFilter downloadSsidJsonIntentFilter = new IntentFilter(DownloadSsidJsonService.BROADCAST_ACTION);
+        DownloadSsidJsonResponseReceiver downloadSsidJsonResponseReceiver = new DownloadSsidJsonResponseReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(downloadSsidJsonResponseReceiver, downloadSsidJsonIntentFilter);
     }
 
     @Override
@@ -198,14 +293,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             }
         }
 
-        IntentFilter addAllIntentFilter = new IntentFilter(AddAllNetworksService.BROADCAST_ACTION);
-        AddAllNetworksResponseReceiver addAllNetworksResponseReceiver = new AddAllNetworksResponseReceiver();
-        LocalBroadcastManager.getInstance(this).registerReceiver(addAllNetworksResponseReceiver, addAllIntentFilter);
-
-        IntentFilter removeAllIntentFilter = new IntentFilter(RemoveAllNetworksService.BROADCAST_ACTION);
-        RemoveAllNetworksResponseReceiver removeAllNetworksResponseReceiver = new RemoveAllNetworksResponseReceiver();
-        LocalBroadcastManager.getInstance(this).registerReceiver(removeAllNetworksResponseReceiver, removeAllIntentFilter);
-
+        setupBroadcastReceivers();
 
         // Use Toolbar instead of ActionBar. See:
         // http://blog.xamarin.com/android-tips-hello-toolbar-goodbye-action-bar/
@@ -213,7 +301,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        networks = new ArrayList<Network>();
+        networks = new ArrayList<>();
         try{
             getSSIDs();
         }
@@ -231,6 +319,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             startService(new Intent(this, NotificationService.class));
         }
 
+        checkForNewSsidFile();
     }
 
     @Override
@@ -438,4 +527,3 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         return false;
     }
 }
-
