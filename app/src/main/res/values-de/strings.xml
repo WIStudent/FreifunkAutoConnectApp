@@ -23,4 +23,5 @@
     <string name="pref_no_notification_connected_summ">Du wirst über Freifunk-Netze nicht benachrichtigt, wenn das Gerät bereits mit einem WLAN verbunden ist.</string>
     <string name="pref_notification_vibrate">Vibrieren</string>
     <string name="pref_notification_sound">Benachrichtigungston abspielen</string>
+    <string name="message_ssids_updated">Die Liste der SSIDs wurde aktualisiert.</string>
 </resources>

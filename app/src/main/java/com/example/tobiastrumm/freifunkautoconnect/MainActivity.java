@@ -26,6 +26,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -122,10 +123,14 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             switch(intent.getStringExtra(DownloadSsidJsonService.STATUS_TYPE)){
                 case DownloadSsidJsonService.STATUS_TYPE_REPLACED:
                     try {
-                        // Read ssid from file again and notify ArrayAdapter na that the dataset was changed.
+                        // Read ssid from file again.
                         getSSIDs();
-                        na.notifyDataSetChanged();
+                        checkActiveNetworks();
                         Log.d(TAG, "SSIDs were refreshed");
+
+                        // Notify user that a new SSID list was downloaded.
+                        Toast toast = Toast.makeText(MainActivity.this, getString(R.string.message_ssids_updated), Toast.LENGTH_LONG);
+                        toast.show();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -158,12 +163,12 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         BufferedReader reader = new BufferedReader(is);
         String line;
         while ((line = reader.readLine()) != null) {
-            //networks.add(new Network(line));
             jsonString += line;
         }
         reader.close();
 
         // Read SSIDs from JSON file
+        networks.clear();
         try {
             JSONObject json = new JSONObject(jsonString);
             JSONArray ssidsJsonArray = json.getJSONArray("ssids");
@@ -205,6 +210,22 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         Collections.sort(networks);
     }
 
+    private void checkForNewSsidFile(){
+        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+        long lastCheck = sharedPref.getLong(getString(R.string.preference_timestamp_last_ssid_download), 0);
+        long currentTime = System.currentTimeMillis() / 1000L;
+
+        Log.d(TAG, "Current timestamp: " + currentTime +  " last check timestamp: " + lastCheck);
+
+        if(currentTime - lastCheck > 24*60*60){
+            // Start DownloadSsidJsonService to check if a newer ssids.json file is available.
+            Intent intent = new Intent(this, DownloadSsidJsonService.class);
+            startService(intent);
+        }
+
+
+    }
+
     private File createUserSSIDFile(){
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
@@ -229,7 +250,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             Log.i(TAG, "Scan for user_ssids.csv file");
             MediaScannerConnection.scanFile(
                     this,
-                    new String[]{directory.getAbsolutePath(), user_ssids.getAbsolutePath(), },
+                    new String[]{directory.getAbsolutePath(), user_ssids.getAbsolutePath(),},
                     null,
                     new MediaScannerConnection.OnScanCompletedListener() {
                         public void onScanCompleted(String path, Uri uri) {
@@ -240,6 +261,20 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             );
         }
         return null;
+    }
+
+    private void setupBroadcastReceivers(){
+        IntentFilter addAllIntentFilter = new IntentFilter(AddAllNetworksService.BROADCAST_ACTION);
+        AddAllNetworksResponseReceiver addAllNetworksResponseReceiver = new AddAllNetworksResponseReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(addAllNetworksResponseReceiver, addAllIntentFilter);
+
+        IntentFilter removeAllIntentFilter = new IntentFilter(RemoveAllNetworksService.BROADCAST_ACTION);
+        RemoveAllNetworksResponseReceiver removeAllNetworksResponseReceiver = new RemoveAllNetworksResponseReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(removeAllNetworksResponseReceiver, removeAllIntentFilter);
+
+        IntentFilter downloadSsidJsonIntentFilter = new IntentFilter(DownloadSsidJsonService.BROADCAST_ACTION);
+        DownloadSsidJsonResponseReceiver downloadSsidJsonResponseReceiver = new DownloadSsidJsonResponseReceiver();
+        LocalBroadcastManager.getInstance(this).registerReceiver(downloadSsidJsonResponseReceiver, downloadSsidJsonIntentFilter);
     }
 
     @Override
@@ -258,18 +293,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             }
         }
 
-        IntentFilter addAllIntentFilter = new IntentFilter(AddAllNetworksService.BROADCAST_ACTION);
-        AddAllNetworksResponseReceiver addAllNetworksResponseReceiver = new AddAllNetworksResponseReceiver();
-        LocalBroadcastManager.getInstance(this).registerReceiver(addAllNetworksResponseReceiver, addAllIntentFilter);
-
-        IntentFilter removeAllIntentFilter = new IntentFilter(RemoveAllNetworksService.BROADCAST_ACTION);
-        RemoveAllNetworksResponseReceiver removeAllNetworksResponseReceiver = new RemoveAllNetworksResponseReceiver();
-        LocalBroadcastManager.getInstance(this).registerReceiver(removeAllNetworksResponseReceiver, removeAllIntentFilter);
-
-        IntentFilter downloadSsidJsonIntentFilter = new IntentFilter(DownloadSsidJsonService.BROADCAST_ACTION);
-        DownloadSsidJsonResponseReceiver downloadSsidJsonResponseReceiver = new DownloadSsidJsonResponseReceiver();
-        LocalBroadcastManager.getInstance(this).registerReceiver(downloadSsidJsonResponseReceiver, downloadSsidJsonIntentFilter);
-
+        setupBroadcastReceivers();
 
         // Use Toolbar instead of ActionBar. See:
         // http://blog.xamarin.com/android-tips-hello-toolbar-goodbye-action-bar/
@@ -277,7 +301,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        networks = new ArrayList<Network>();
+        networks = new ArrayList<>();
         try{
             getSSIDs();
         }
@@ -295,10 +319,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
             startService(new Intent(this, NotificationService.class));
         }
 
-        // Start DownloadSsidJsonService to check if a newer ssids.json file is available.
-        Intent intent = new Intent(this, DownloadSsidJsonService.class);
-        startService(intent);
-
+        checkForNewSsidFile();
     }
 
     @Override
