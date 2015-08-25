@@ -6,6 +6,9 @@ Freifunk Logo: [freifunk.net](http://freifunk.net),  [CC BY-SA 3.0](https://crea
 ## Info
 The Freifunk Auto Connect App makes it easier to add multiple Freifunk SSIDs to the network configuration of your Android device.
 
+## How to add missing SSIDs
+Please visit the [freifunk-ssids repository](https://github.com/WIStudent/freifunk-ssids) to find out how to submit missing SSIDs.
+
 ## Build status
 Build status on [Travis CI](https://travis-ci.org/):
 [![Build Status](https://travis-ci.org/WIStudent/FreifunkAutoConnectApp.svg?branch=master)](https://travis-ci.org/WIStudent/FreifunkAutoConnectApp)

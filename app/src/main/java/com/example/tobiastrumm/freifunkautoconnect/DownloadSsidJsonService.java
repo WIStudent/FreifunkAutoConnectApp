@@ -26,7 +26,7 @@ import java.net.URL;
 public class DownloadSsidJsonService extends IntentService {
 
     private final static String TAG = DownloadSsidJsonService.class.getSimpleName();
-    private final static String SSID_URL = "https://raw.githubusercontent.com/WIStudent/FreifunkAutoConnectApp/master/app/src/main/assets/ssids.json";
+    private final static String SSID_URL = "https://raw.githubusercontent.com/WIStudent/freifunk-ssids/freifunk_auto_connect_production/ssids.json";
     public static final String BROADCAST_ACTION = "com.example.tobiastrumm.freifunkautoconnect.downloadssidjsonservice.BROADCAST";
     public static final String STATUS_TYPE = "status_type";
     public static final String STATUS_TYPE_REPLACED = "type_replaced";

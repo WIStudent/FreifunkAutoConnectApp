@@ -1,5 +1,9 @@
 # Change Log
 
+## [unreleased] [unreleased]
+### Added
+- The app will check on start up, if an updated list of SSIDs is available. If the check didn't fail, the next check will not be started until 24 hours have passed.
+
 ## [0.4] 2015-08-15
 ### Changed
 - Improved notification settings.
