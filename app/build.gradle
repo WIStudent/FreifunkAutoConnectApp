@@ -8,8 +8,8 @@ android {
         applicationId "com.example.tobiastrumm.freifunkautoconnect"
         minSdkVersion 15
         targetSdkVersion 22
-        versionCode 4
-        versionName "0.4"
+        versionCode 5
+        versionName "0.5"
     }
     buildTypes {
         release {
