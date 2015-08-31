@@ -20,10 +20,16 @@ import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -191,12 +197,46 @@ public class NotificationService extends Service {
     }
 
     private void getSSIDs() throws IOException {
-        InputStreamReader is = new InputStreamReader(getAssets().open("ssids.csv"));
+        // Check if ssids.json exists in internal storage.
+        File ssidsJson = getFileStreamPath("ssids.json");
+        if(!ssidsJson.exists()){
+            Log.d(TAG, "Copy ssids.json to internal storage.");
+            // If not, copy ssids.json from assets to internal storage.
+            FileOutputStream outputStream = openFileOutput("ssids.json", Context.MODE_PRIVATE);
+            InputStream inputStream = getAssets().open("ssids.json");
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while((bytesRead = inputStream.read(buffer)) != -1){
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            inputStream.close();
+            outputStream.close();
+            Log.d(TAG, "Finished copying ssids.json to internal storage");
+        }
+
+        // Read ssids.json from internal storage.
+        String jsonString = "";
+        InputStreamReader is = new InputStreamReader(new FileInputStream(ssidsJson));
         BufferedReader reader = new BufferedReader(is);
         String line;
         while ((line = reader.readLine()) != null) {
-            networks.add(new Network(line));
+            jsonString += line;
         }
+        reader.close();
+
+        // Read SSIDs from JSON file
+        networks.clear();
+        try {
+            JSONObject json = new JSONObject(jsonString);
+            JSONArray ssidsJsonArray = json.getJSONArray("ssids");
+            for(int i = 0; i<ssidsJsonArray.length(); i++){
+                networks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
 
         // Read user defined ssids
         // Check if external storage is available
