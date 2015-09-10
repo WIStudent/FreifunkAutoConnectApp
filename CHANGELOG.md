@@ -1,5 +1,9 @@
 # Change Log
 
+## [unreleased] [unreleased]
+### Fixed
+- Fixed a problem where new SSIDs weren't shown when the filter function was used right after the list of SSIDs was updated.
+
 ## [0.5] 2015-08-31
 ### Added
 - The app will check on start up, if an updated list of SSIDs is available. If the check didn't fail, the next check will not be started until 24 hours have passed.

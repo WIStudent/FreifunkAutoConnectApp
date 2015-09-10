@@ -125,6 +125,14 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
                     try {
                         // Read ssid from file again.
                         getSSIDs();
+                        /*
+                        It is necessary to create a new NetworkAdapter or the old SSIDs will be shown when the FilterView was used.
+                        The reason for that is that the ArrayList networks of the NetworkAdapter will only be set when the NetworkAdapter is created.
+                        This ArrayList networks is used to recreate the list if no filter should be used. Maybe the NetworkAdapter should be
+                        reimplemented. See also http://codetheory.in/android-filters/ for some tips on how to use filters with ArrayAdapters.
+                         */
+                        na = new NetworkAdapter(MainActivity.this, networks);
+                        lv.setAdapter(na);
                         checkActiveNetworks();
                         Log.d(TAG, "SSIDs were refreshed");
 
