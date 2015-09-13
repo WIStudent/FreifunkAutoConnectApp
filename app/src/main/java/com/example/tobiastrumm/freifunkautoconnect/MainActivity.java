@@ -55,9 +55,9 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
     private static String TAG = MainActivity.class.getSimpleName();
 
-    private ArrayList<Network> networks;
+    private ArrayList<Network> allNetworks;
+    private ArrayList<Network> shownNetworks;
 
-    private ListView lv;
     private NetworkAdapter na;
     private WifiManager wm;
 
@@ -125,15 +125,9 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
                     try {
                         // Read ssid from file again.
                         getSSIDs();
-                        /*
-                        It is necessary to create a new NetworkAdapter or the old SSIDs will be shown when the FilterView was used.
-                        The reason for that is that the ArrayList networks of the NetworkAdapter will only be set when the NetworkAdapter is created.
-                        This ArrayList networks is used to recreate the list if no filter should be used. Maybe the NetworkAdapter should be
-                        reimplemented. See also http://codetheory.in/android-filters/ for some tips on how to use filters with ArrayAdapters.
-                         */
-                        na = new NetworkAdapter(MainActivity.this, networks);
-                        lv.setAdapter(na);
                         checkActiveNetworks();
+                        // caling na.notifyAllNetworksHasChangedReapplyFilter isn't necessary here because it was already called at the end of
+                        // checkActiveNetworks
                         Log.d(TAG, "SSIDs were refreshed");
 
                         // Notify user that a new SSID list was downloaded.
@@ -176,12 +170,12 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         reader.close();
 
         // Read SSIDs from JSON file
-        networks.clear();
+        allNetworks.clear();
         try {
             JSONObject json = new JSONObject(jsonString);
             JSONArray ssidsJsonArray = json.getJSONArray("ssids");
             for(int i = 0; i<ssidsJsonArray.length(); i++){
-                networks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
+                allNetworks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
             }
 
         } catch (JSONException e) {
@@ -208,14 +202,14 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
                 is = new InputStreamReader(new FileInputStream(user_ssids));
                 reader = new BufferedReader(is);
                 while ((line = reader.readLine()) != null) {
-                    networks.add(new Network(line));
+                    allNetworks.add(new Network(line));
                 }
             }
             else{
                 Log.w(TAG, "Could not find or create user_ssids file.");
             }
         }
-        Collections.sort(networks);
+        Collections.sort(allNetworks);
     }
 
     private void checkForNewSsidFile(){
@@ -309,7 +303,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        networks = new ArrayList<>();
+        allNetworks = new ArrayList<>();
         try{
             getSSIDs();
         }
@@ -419,13 +413,14 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
     }
 
     public void addAllNetworks(){
+        // Add only currently shown networks
         // Create ProgressDialog and show it
-        progressBarMax = networks.size();
+        progressBarMax = shownNetworks.size();
         startProgressDialog(progressBarMax);
 
         //Start AddAllNetworksService
         Intent intent = new Intent(this, AddAllNetworksService.class);
-        intent.putParcelableArrayListExtra(AddAllNetworksService.INPUT_NETWORKS, networks);
+        intent.putParcelableArrayListExtra(AddAllNetworksService.INPUT_NETWORKS, shownNetworks);
         startService(intent);
     }
 
@@ -436,31 +431,32 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
     public void removeAllNetworks(){
         // Create ProgressDialog and show it
-        progressBarMax = networks.size();
+        progressBarMax = shownNetworks.size();
         startProgressDialog(progressBarMax);
 
         //Start RemoveAllNetworksService
         Intent intent = new Intent(this, RemoveAllNetworksService.class);
-        intent.putParcelableArrayListExtra(RemoveAllNetworksService.INPUT_NETWORKS, networks);
+        intent.putParcelableArrayListExtra(RemoveAllNetworksService.INPUT_NETWORKS, shownNetworks);
         startService(intent);
     }
 
     private void setupUI(){
-        lv = (ListView) findViewById(R.id.lv_networks);
+        ListView lv = (ListView) findViewById(R.id.lv_networks);
         lv.setOnItemClickListener(this);
-        na = new NetworkAdapter(this, networks);
+        shownNetworks = new ArrayList<Network>(allNetworks);
+        na = new NetworkAdapter(this, allNetworks, shownNetworks);
         lv.setAdapter(na);
     }
 
     private void checkActiveNetworks(){
         // Check which Network is already added to the network configuration
-        // WARNING: Could cause performance issues for large lists of networks and network configurations
+        // WARNING: Could cause performance issues for large lists of allNetworks and network configurations
 
         List<WifiConfiguration> wifiConf = wm.getConfiguredNetworks();
         if(wifiConf != null) {
             long timeStart = System.currentTimeMillis();
             Collections.sort(wifiConf, new WifiConfigurationComparator());
-            for (Network n : networks) {
+            for (Network n : allNetworks) {
                 // Search for the current network in the network configuration. If it is found (index will be >= 0), set active to true
                 int index = Collections.binarySearch(wifiConf, n.ssid, new WifiConfigurationSSIDComparator());
                 n.active = index >= 0;
@@ -468,15 +464,16 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
 
             long timeEnd = System.currentTimeMillis();
             Log.d(TAG, "Duration checkActiveNetworks: " + (timeEnd - timeStart) + "ms");
-            na.notifyDataSetChanged();
+            na.notifyAllNetworksHasChangedReapplyFilter();
         }
 
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        // Get the Network object
-        Network n = networks.get(position);
+        // Get the Network object that was clicked. Must be looked up in shownNetworks because it contains
+        // all Networks, that are currently shown in the ListView.
+        Network n = shownNetworks.get(position);
         // If the network is already saved in the network configuration, remove it
         if(n.active){
             n.active = false;
@@ -501,7 +498,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         }
         // Save configuration
         wm.saveConfiguration();
-        // Notify the NetworkAdapter that the content of ArrayList networks was changed.
+        // Notify the NetworkAdapter that the content of ArrayList allNetworks was changed.
         na.notifyDataSetChanged();
     }
 

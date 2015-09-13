@@ -11,23 +11,42 @@ import android.widget.Filterable;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Tobias on 06.05.2015.
  */
 public class NetworkAdapter extends ArrayAdapter<Network> implements Filterable{
 
-    private ArrayList<Network> networks;
-    private ArrayList<Network> filteredNetworks;
+    private List<Network> allNetworks;
+    private List<Network> shownNetworks;
+    private CharSequence constraint;
+
+    private Filter mNetworkFilter;
 
     private static class ViewHolder{
         TextView tv_ssid;
     }
 
-    public NetworkAdapter(Context context, ArrayList<Network> networks){
-        super(context, 0, networks);
-        this.networks = new ArrayList<Network>(networks);
-        this.filteredNetworks = new ArrayList<>(networks);
+    /**
+     * allNetworks and shownNetworks must be two separate Lists, even if they contain the same elements.
+     * @param context
+     * @param allNetworks contains all Networks that should be included in an unfiltered ListView.
+     * @param shownNetworks is used by the underlying ArrayAdapter and contains the Networks that are currently contained in the ListView.
+     */
+    public NetworkAdapter(Context context, List<Network> allNetworks, List<Network> shownNetworks){
+        super(context, 0, shownNetworks);
+        this.allNetworks = allNetworks;
+        this.shownNetworks = shownNetworks;
+    }
+
+    /**
+     * Notifies the NetworkAdapter that the allNetworks List was changed. The last filter constraint will be used with the updated
+     * allNetwork List to update the shownNetworks.
+     */
+    public void notifyAllNetworksHasChangedReapplyFilter(){
+        // Filter again with the last constraint.
+        getFilter().filter(constraint);
     }
 
     @Override
@@ -58,43 +77,51 @@ public class NetworkAdapter extends ArrayAdapter<Network> implements Filterable{
 
 
     // For SearchView and Filter, see:
+    // http://codetheory.in/android-filters/
     // https://coderwall.com/p/zpwrsg/add-search-function-to-list-view-in-android
     // https://stackoverflow.com/questions/11840344/android-custom-arrayadapter-doesnt-refresh-after-filter
     // https://stackoverflow.com/questions/27903361/searchmenuitem-getactionview-returning-null
-    @Override
-    public Filter getFilter() {
-        Filter filter = new Filter() {
+    public Filter getFilter(){
+        if(mNetworkFilter == null){
+            mNetworkFilter = new NetworkFilter();
+        }
+        return mNetworkFilter;
+    }
 
-            @Override
-            protected void publishResults(CharSequence constraint, FilterResults results) {
+    private class NetworkFilter extends Filter{
 
-                filteredNetworks = (ArrayList<Network>)results.values;
-                notifyDataSetChanged();
-                clear();
-                int count = filteredNetworks.size();
-                for(int i = 0; i<count; i++){
-                    add(filteredNetworks.get(i));
-                    notifyDataSetInvalidated();
-                }
+        @Override
+        protected FilterResults performFiltering(CharSequence charSequence) {
+            FilterResults results = new FilterResults();
+            constraint = charSequence;
+
+            if(charSequence == null || charSequence.length() == 0){
+                results.values = allNetworks;
+                results.count = allNetworks.size();
             }
+            else{
+                ArrayList<Network> filteredSSIDs = new ArrayList<>();
 
-            @Override
-            protected FilterResults performFiltering(CharSequence constraint) {
-                FilterResults results = new FilterResults();
-                ArrayList<Network> filteredSSIDs = new ArrayList<Network>();
-
-                constraint = constraint.toString().toLowerCase();
-                for (Network n : networks) {
+                charSequence = charSequence.toString().toLowerCase();
+                for (Network n : allNetworks) {
                     String ssid = n.ssid;
-                    if (ssid.toLowerCase().contains(constraint)) {
+                    if (ssid.toLowerCase().contains(charSequence)) {
                         filteredSSIDs.add(n);
                     }
                     results.values = filteredSSIDs;
                     results.count = filteredSSIDs.size();
                 }
-                return results;
+
             }
-        };
-        return filter;
+            return results;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
+            shownNetworks.clear();
+            shownNetworks.addAll((ArrayList<Network>) filterResults.values);
+            notifyDataSetChanged();
+        }
     }
 }
