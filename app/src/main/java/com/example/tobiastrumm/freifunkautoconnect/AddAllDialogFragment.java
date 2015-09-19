@@ -6,14 +6,12 @@ import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
-/**
- * Created by tobia_000 on 12.05.2015.
- */
 public class AddAllDialogFragment extends DialogFragment {
 
-
-
     public interface OnAddAllListener{
+        /**
+         * This method should add all shown networks to the network configuration.
+         */
         public void addAllNetworks();
     }
 

@@ -13,6 +13,9 @@ public class RemoveAllDialogFragment extends DialogFragment {
 
 
    public interface OnRemoveAllListener{
+       /**
+        * This method should remove all shown networks from the network configuration.
+        */
        public void removeAllNetworks();
    }
 

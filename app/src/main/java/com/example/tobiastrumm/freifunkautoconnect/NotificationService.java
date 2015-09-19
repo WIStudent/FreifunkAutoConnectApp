@@ -242,7 +242,7 @@ public class NotificationService extends Service {
         // Check if external storage is available
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            File user_ssids = new File(Environment.getExternalStorageDirectory() + File.separator + MainActivity.DIRECTORY + File.separator + MainActivity.USER_SSIDS_FILE );
+            File user_ssids = new File(Environment.getExternalStorageDirectory() + File.separator + AddRemoveNetworksFragment.DIRECTORY + File.separator + AddRemoveNetworksFragment.USER_SSIDS_FILE );
             // Check if file exists
             // If the file was found/created:
             if(user_ssids.exists()){
