@@ -1,7 +1,6 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
 import android.app.ActivityManager;
-import android.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -10,7 +9,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.TabLayout;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
 
     private static String TAG = MainActivity.class.getSimpleName();
 
-    private AddRemoveNetworksFragment addRemoveNetworksFragment;
+    private MyFragmentPagerAdapter myFragmentPagerAdapter;
 
     private class AddAllNetworksResponseReceiver extends BroadcastReceiver {
         private AddAllNetworksResponseReceiver(){}
@@ -145,13 +146,15 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Check if addRemoveNetworksFragment is already added to this activity. If that is not the case, create it.
-        FragmentManager fm = getFragmentManager();
-        addRemoveNetworksFragment = (AddRemoveNetworksFragment) fm.findFragmentByTag(ADD_REMOVE_NETWORKS_FRAGMENT_TAG);
-        if(addRemoveNetworksFragment == null){
-            addRemoveNetworksFragment = AddRemoveNetworksFragment.newInstance();
-            fm.beginTransaction().add(R.id.fragment_container, addRemoveNetworksFragment, ADD_REMOVE_NETWORKS_FRAGMENT_TAG).commit();
-        }
+        // Setup Tabs and Fragments
+        myFragmentPagerAdapter = new MyFragmentPagerAdapter(getFragmentManager(), MainActivity.this);
+
+        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+        viewPager.setAdapter(myFragmentPagerAdapter);
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabLayout);
+        tabLayout.setupWithViewPager(viewPager);
+
 
         // Start NotificationService if it should running but isn't
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -250,12 +253,12 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
 
     @Override
     public void addAllNetworks() {
-        addRemoveNetworksFragment.addAllNetworks();
+        myFragmentPagerAdapter.addRemoveNetworksFragment.addAllNetworks();
     }
 
     @Override
     public void removeAllNetworks() {
-        addRemoveNetworksFragment.removeAllNetworks();
+        myFragmentPagerAdapter.addRemoveNetworksFragment.removeAllNetworks();
     }
 
     @Override
