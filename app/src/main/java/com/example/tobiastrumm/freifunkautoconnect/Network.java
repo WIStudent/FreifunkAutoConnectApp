@@ -65,7 +65,7 @@ public class Network implements Comparable<Network>, Parcelable{
 
                 @Override
                 public Network[] newArray(int i) {
-                    return new Network[0];
+                    return new Network[i];
                 }
             };
 }

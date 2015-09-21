@@ -2,21 +2,18 @@ package com.example.tobiastrumm.freifunkautoconnect;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.content.Context;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.view.ViewGroup;
 
 public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
     private final int PAGE_COUNT = 2;
     private String tabTitles[] = new String[] {"SSIDs", "Nearest AP"};
-    private Context context;
 
     public AddRemoveNetworksFragment addRemoveNetworksFragment;
-    public DummyFragment dummyFragment;
+    public NearestNodesFragment nearestNodesFragment;
 
-    public MyFragmentPagerAdapter(FragmentManager fm, Context context){
+    public MyFragmentPagerAdapter(FragmentManager fm){
         super(fm);
-        this.context = context;
     }
     @Override
     public Fragment getItem(int position) {
@@ -24,7 +21,7 @@ public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
             case 0:
                 return AddRemoveNetworksFragment.newInstance();
             case 1:
-                return DummyFragment.newInstance(2);
+                return NearestNodesFragment.newInstance();
             default:
                 return null;
         }
@@ -50,7 +47,7 @@ public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
                 addRemoveNetworksFragment = (AddRemoveNetworksFragment) createdFragment;
                 break;
             case 1:
-                dummyFragment = (DummyFragment) createdFragment;
+                nearestNodesFragment = (NearestNodesFragment) createdFragment;
                 break;
         }
         return createdFragment;

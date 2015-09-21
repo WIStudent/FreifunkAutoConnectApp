@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -49,6 +50,9 @@
             android:exported="false" />
         <service
             android:name=".DownloadSsidJsonService"
+            android:exported="false" />
+        <service
+            android:name=".FindNearestNodesService"
             android:exported="false" />
         <activity
             android:name=".SettingsActivity"

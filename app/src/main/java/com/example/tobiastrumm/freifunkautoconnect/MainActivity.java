@@ -19,7 +19,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class MainActivity extends AppCompatActivity implements AddRemoveNetworksFragment.OnFragmentInteractionListener, RemoveAllDialogFragment.OnRemoveAllListener, AddAllDialogFragment.OnAddAllListener{
+public class MainActivity extends AppCompatActivity implements AddRemoveNetworksFragment.OnFragmentInteractionListener, RemoveAllDialogFragment.OnRemoveAllListener, AddAllDialogFragment.OnAddAllListener, NearestNodesFragment.OnFragmentInteractionListener{
 
     private ProgressDialog progress;
     private int progressBarMax;
@@ -29,8 +29,6 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
     private static final String STATE_PROGRESSBAR_RUNNING = "state_progressbar_running";
     private static final String STATE_PROGRESSBAR_MAX = "state_progressbar_max";
     private static final String STATE_PROGRESSBAR_PROGRESS = "state_progressbar_progress";
-
-    private static final String ADD_REMOVE_NETWORKS_FRAGMENT_TAG = "add_remove_networks_fragment_tag";
 
     private static String TAG = MainActivity.class.getSimpleName();
 
@@ -147,10 +145,73 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
         setSupportActionBar(toolbar);
 
         // Setup Tabs and Fragments
-        myFragmentPagerAdapter = new MyFragmentPagerAdapter(getFragmentManager(), MainActivity.this);
+        myFragmentPagerAdapter = new MyFragmentPagerAdapter(getFragmentManager());
 
         ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
         viewPager.setAdapter(myFragmentPagerAdapter);
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+
+            int currentPosition = 0;
+            
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageSelected(int newPosition) {
+                FragmentLifecycle fragmentToShow;
+                switch(newPosition){
+                    case 0:
+                        fragmentToShow = (FragmentLifecycle)myFragmentPagerAdapter.addRemoveNetworksFragment;
+                        break;
+                    case 1:
+                        fragmentToShow = (FragmentLifecycle)myFragmentPagerAdapter.nearestNodesFragment;
+                        break;
+                    default:
+                        fragmentToShow = new FragmentLifecycle() {
+                            @Override
+                            public void onPauseFragment() {
+                            }
+                            @Override
+                            public void onResumeFragment() {
+                            }
+                        };
+                }
+
+                FragmentLifecycle fragmentToHide;
+                switch(currentPosition){
+                    case 0:
+                        fragmentToHide = (FragmentLifecycle)myFragmentPagerAdapter.addRemoveNetworksFragment;
+                        break;
+                    case 1:
+                        fragmentToHide = (FragmentLifecycle)myFragmentPagerAdapter.nearestNodesFragment;
+                        break;
+                    default:
+                        fragmentToHide = new FragmentLifecycle() {
+                            @Override
+                            public void onPauseFragment() {
+                            }
+                            @Override
+                            public void onResumeFragment() {
+                            }
+                        };
+                }
+
+                if(fragmentToShow != null){
+                    fragmentToShow.onResumeFragment();
+                }
+                if(fragmentToHide != null){
+                    fragmentToHide.onPauseFragment();
+                }
+
+
+                currentPosition = newPosition;
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+        });
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabLayout);
         tabLayout.setupWithViewPager(viewPager);

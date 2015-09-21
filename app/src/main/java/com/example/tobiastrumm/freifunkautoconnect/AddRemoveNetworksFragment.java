@@ -51,7 +51,7 @@ import java.util.List;
  * Use the {@link AddRemoveNetworksFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AddRemoveNetworksFragment extends Fragment implements AdapterView.OnItemClickListener{
+public class AddRemoveNetworksFragment extends Fragment implements AdapterView.OnItemClickListener, FragmentLifecycle{
 
     private static final String TAG = AddRemoveNetworksFragment.class.getSimpleName();
 
@@ -154,7 +154,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         catch(IOException e){
             // Could not read SSIDs from csv file.
         }
-
+        shownNetworks = new ArrayList<>(allNetworks);
         wm = (WifiManager) getActivity().getSystemService(Context.WIFI_SERVICE);
     }
 
@@ -165,7 +165,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         View view = inflater.inflate(R.layout.fragment_add_remove_networks, container, false);
         ListView lv = (ListView) view.findViewById(R.id.lv_networks);
         lv.setOnItemClickListener(this);
-        shownNetworks = new ArrayList<>(allNetworks);
+
         na = new NetworkAdapter(getActivity(), allNetworks, shownNetworks);
         lv.setAdapter(na);
 
@@ -187,18 +187,34 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onStart() {
+        super.onStart();
         // Check which Networks are already saved in the network configuration
         checkActiveNetworks();
-
-        registerBroadcastReceivers();
     }
 
     @Override
     public void onPause() {
         super.onPause();
         unregisterBroadcastReceivers();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        registerBroadcastReceivers();
+    }
+
+
+    @Override
+    public void onPauseFragment() {
+
+    }
+
+    @Override
+    public void onResumeFragment() {
+        // Check which Networks are already saved in the network configuration
+        checkActiveNetworks();
     }
 
     @Override
