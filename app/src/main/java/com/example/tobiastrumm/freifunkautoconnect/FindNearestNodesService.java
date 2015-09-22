@@ -26,8 +26,8 @@ import java.util.Iterator;
 public class FindNearestNodesService extends IntentService implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private final static String TAG = FindNearestNodesService.class.getSimpleName();
-    private final static int DEFAULT_NUMBER_OF_NODES = 20;
-    private final static boolean DEFAULT_SHOW_OFFLINE_NODES = true;
+    private final static int DEFAULT_NUMBER_OF_NODES = 10;
+    private final static boolean DEFAULT_SHOW_OFFLINE_NODES = false;
 
     public static final String BROADCAST_ACTION = "com.example.tobiastrumm.freifunkautoconnect.findnearestnodesservice.BROADCAST";
     public static final String STATUS_TYPE = "status_type";
@@ -89,7 +89,7 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
                 Node node = new Node(name, lat, lon, online);
                 nodes.add(node);
             }
-            return nodes.toArray(new Node[0]);
+            return nodes.toArray(new Node[nodes.size()]);
         } catch (JSONException e) {
             e.printStackTrace();
             return new Node[0];
@@ -102,9 +102,9 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
     private void calculateManhattanDistance(Node[] nodes, Location location) {
         double lat = location.getLatitude();
         double lon = location.getLongitude();
-        
-        for(int i = 0; i<nodes.length; i++){
-            nodes[i].distance = Math.abs(nodes[i].lat - lat) + Math.abs(nodes[i].lon - lon);
+
+        for (Node node : nodes) {
+            node.distance = Math.abs(node.lat - lat) + Math.abs(node.lon - lon);
         }
     }
 

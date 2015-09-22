@@ -36,4 +36,7 @@
 
 <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="pref_nearest_ap">Nearest Access Points</string>
+    <string name="pref_nearest_ap_number">Number of access points to show</string>
+    <string name="pref_nearest_ap_offline">Show offline access points</string>
 </resources>
