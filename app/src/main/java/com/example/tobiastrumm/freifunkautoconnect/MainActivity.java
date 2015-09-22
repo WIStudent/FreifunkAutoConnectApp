@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
 
             int currentPosition = 0;
-            
+
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
             }
@@ -160,18 +160,19 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
             @Override
             public void onPageSelected(int newPosition) {
                 FragmentLifecycle fragmentToShow;
-                switch(newPosition){
+                switch (newPosition) {
                     case 0:
-                        fragmentToShow = (FragmentLifecycle)myFragmentPagerAdapter.addRemoveNetworksFragment;
+                        fragmentToShow = (FragmentLifecycle) myFragmentPagerAdapter.addRemoveNetworksFragment;
                         break;
                     case 1:
-                        fragmentToShow = (FragmentLifecycle)myFragmentPagerAdapter.nearestNodesFragment;
+                        fragmentToShow = (FragmentLifecycle) myFragmentPagerAdapter.nearestNodesFragment;
                         break;
                     default:
                         fragmentToShow = new FragmentLifecycle() {
                             @Override
                             public void onPauseFragment() {
                             }
+
                             @Override
                             public void onResumeFragment() {
                             }
@@ -179,28 +180,29 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
                 }
 
                 FragmentLifecycle fragmentToHide;
-                switch(currentPosition){
+                switch (currentPosition) {
                     case 0:
-                        fragmentToHide = (FragmentLifecycle)myFragmentPagerAdapter.addRemoveNetworksFragment;
+                        fragmentToHide = (FragmentLifecycle) myFragmentPagerAdapter.addRemoveNetworksFragment;
                         break;
                     case 1:
-                        fragmentToHide = (FragmentLifecycle)myFragmentPagerAdapter.nearestNodesFragment;
+                        fragmentToHide = (FragmentLifecycle) myFragmentPagerAdapter.nearestNodesFragment;
                         break;
                     default:
                         fragmentToHide = new FragmentLifecycle() {
                             @Override
                             public void onPauseFragment() {
                             }
+
                             @Override
                             public void onResumeFragment() {
                             }
                         };
                 }
 
-                if(fragmentToShow != null){
+                if (fragmentToShow != null) {
                     fragmentToShow.onResumeFragment();
                 }
-                if(fragmentToHide != null){
+                if (fragmentToHide != null) {
                     fragmentToHide.onPauseFragment();
                 }
 
@@ -214,6 +216,8 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
         });
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabLayout);
+        tabLayout.setTabMode(TabLayout.MODE_FIXED);
+        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
         tabLayout.setupWithViewPager(viewPager);
 
 

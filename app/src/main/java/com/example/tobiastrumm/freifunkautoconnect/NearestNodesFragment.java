@@ -16,6 +16,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -41,6 +43,9 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
     private ArrayList<Node> nodes;
     private NodeAdapter nodeAdapter;
     private TextView tv_last_update;
+    private ProgressBar progressBar;
+    private RelativeLayout relativeLayout;
+    private String last_updated_text;
 
     private FindNearestNodesResponseReceiver findNearestNodesResponseReceiver;
 
@@ -73,13 +78,15 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
                     long timestamp = intent.getLongExtra(FindNearestNodesService.RETURN_LAST_UPDATE, 0);
                     String last_update_string_date = DateFormat.getDateFormat(getActivity()).format(new Date(timestamp * 1000));
                     String last_update_string_time = DateFormat.getTimeFormat(getActivity()).format(new Date(timestamp * 1000));
-                    tv_last_update.setText("Last updated: " + last_update_string_date + " " + last_update_string_time);
+                    last_updated_text = "Last updated: " + last_update_string_date + " " + last_update_string_time;
+                    tv_last_update.setText(last_updated_text);
                     break;
                 case FindNearestNodesService.STATUS_TYPE_ERROR:
                     //TODO: Something went wrong
                     Log.w(TAG, "Broadcast Receiver: FindNearestNodesService responded: Something went wrong.");
                     break;
             }
+            hideProgressBar();
         }
     }
 
@@ -103,7 +110,7 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
         setRetainInstance(true);
         setupBroadcastReceivers();
         nodes = new ArrayList<>();
-
+        last_updated_text = "Last updated: -";
     }
 
     @Override
@@ -111,23 +118,34 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_nearest_nodes, container, false);
+
+        relativeLayout = (RelativeLayout)view.findViewById(R.id.rl_nearest_nodes);
+
         nodeAdapter = new NodeAdapter(getActivity(), nodes);
         ListView lv_nearest_nodes = (ListView) view.findViewById(R.id.lv_nearest_nodes);
         lv_nearest_nodes.setAdapter(nodeAdapter);
         lv_nearest_nodes.setOnItemClickListener(this);
 
         tv_last_update = (TextView)view.findViewById(R.id.tv_last_update);
-        tv_last_update.setText("Last updated: -");
+        tv_last_update.setText(last_updated_text);
+
+        progressBar = (ProgressBar)view.findViewById(R.id.progressbar_loading);
 
         return view;
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Start FindNearestNodesService
-        //Intent intent = new Intent(getActivity(), FindNearestNodesService.class);
-        //getActivity().startService(intent);
+    private void showProgressBar(){
+        if(progressBar != null){
+            relativeLayout.setVisibility(RelativeLayout.GONE);
+            progressBar.setVisibility(ProgressBar.VISIBLE);
+        }
+    }
+
+    private void hideProgressBar(){
+        if(progressBar != null){
+            progressBar.setVisibility(ProgressBar.GONE);
+            relativeLayout.setVisibility(RelativeLayout.VISIBLE);
+        }
     }
 
 
@@ -151,6 +169,7 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
 
     @Override
     public void onResumeFragment() {
+        showProgressBar();
         // Start FindNearestNodesService
         Intent intent = new Intent(getActivity(), FindNearestNodesService.class);
         getActivity().startService(intent);
