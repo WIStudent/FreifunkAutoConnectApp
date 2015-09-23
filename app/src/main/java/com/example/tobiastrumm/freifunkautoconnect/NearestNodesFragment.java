@@ -1,6 +1,7 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -40,12 +41,19 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
 
     private OnFragmentInteractionListener mListener;
 
+    // ArrayList
     private ArrayList<Node> nodes;
     private NodeAdapter nodeAdapter;
+
+    // TextView last_update
     private TextView tv_last_update;
+    private String last_updated_text;
+
+    // ProgressBar
     private ProgressBar progressBar;
     private RelativeLayout relativeLayout;
-    private String last_updated_text;
+    private boolean showProgress;
+
 
     private FindNearestNodesResponseReceiver findNearestNodesResponseReceiver;
 
@@ -134,8 +142,10 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
         return view;
     }
 
+
     private void showProgressBar(){
         if(progressBar != null){
+            showProgress = true;
             relativeLayout.setVisibility(RelativeLayout.GONE);
             progressBar.setVisibility(ProgressBar.VISIBLE);
         }
@@ -143,6 +153,7 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
 
     private void hideProgressBar(){
         if(progressBar != null){
+            showProgress = false;
             progressBar.setVisibility(ProgressBar.GONE);
             relativeLayout.setVisibility(RelativeLayout.VISIBLE);
         }
@@ -159,6 +170,13 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
     public void onResume() {
         super.onResume();
         registerBroadcastReceivers();
+
+        if(showProgress && isFindNearestNodesServiceRunning()){
+            showProgressBar();
+        }
+        else{
+            showProgress = false;
+        }
     }
 
 
@@ -207,6 +225,16 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
     private void unregisterBroadcastReceivers(){
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getActivity());
         lbm.unregisterReceiver(findNearestNodesResponseReceiver);
+    }
+
+    private boolean isFindNearestNodesServiceRunning(){
+        ActivityManager manager = (ActivityManager) getActivity().getSystemService(Activity.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (FindNearestNodesResponseReceiver.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

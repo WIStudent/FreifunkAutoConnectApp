@@ -1,6 +1,7 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Fragment;
 import android.app.SearchManager;
 import android.content.BroadcastReceiver;
@@ -23,8 +24,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -60,14 +65,26 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
 
     private OnFragmentInteractionListener mListener;
 
+    // ListView stuff
     private ArrayList<Network> allNetworks;
     private ArrayList<Network> shownNetworks;
 
+    // Network
     private NetworkAdapter na;
     private WifiManager wm;
 
+    // SearchView
     private SearchView searchView;
     private String last_filter_term;
+
+    // ProgressBar
+    private LinearLayout linearLayout;
+    private RelativeLayout relativeLayout;
+    private ProgressBar progressBar;
+    private TextView tv_progress;
+    private boolean showProgress;
+    private int last_progress_value;
+    private int progress_max_value;
 
     private class AddAllNetworksResponseReceiver extends BroadcastReceiver{
         private AddAllNetworksResponseReceiver(){}
@@ -77,6 +94,11 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
             switch(intent.getStringExtra(AddAllNetworksService.STATUS_TYPE)){
                 case AddAllNetworksService.STATUS_TYPE_FINISHED:
                     checkActiveNetworks();
+                    hideProgressBar();
+                    break;
+                case RemoveAllNetworksService.STATUS_TYPE_PROGRESS:
+                    int progressBarProgress = intent.getIntExtra(AddAllNetworksService.STATUS_PROGRESS, 0);
+                    updateProgressBar(progressBarProgress);
                     break;
             }
         }
@@ -90,6 +112,11 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
             switch(intent.getStringExtra(RemoveAllNetworksService.STATUS_TYPE)){
                 case RemoveAllNetworksService.STATUS_TYPE_FINISHED:
                     checkActiveNetworks();
+                    hideProgressBar();
+                    break;
+                case RemoveAllNetworksService.STATUS_TYPE_PROGRESS:
+                    int progressBarProgress = intent.getIntExtra(AddAllNetworksService.STATUS_PROGRESS, 0);
+                    updateProgressBar(progressBarProgress);
                     break;
             }
         }
@@ -163,6 +190,12 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_add_remove_networks, container, false);
+
+        linearLayout = (LinearLayout) view.findViewById(R.id.ll_add_remove_networks);
+        progressBar = (ProgressBar) view.findViewById(R.id.progressbar_add_remove_networks);
+        tv_progress = (TextView) view.findViewById(R.id.tv_progresbar);
+        relativeLayout = (RelativeLayout) view.findViewById(R.id.rl_add_remove_networks);
+
         ListView lv = (ListView) view.findViewById(R.id.lv_networks);
         lv.setOnItemClickListener(this);
 
@@ -187,13 +220,6 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        // Check which Networks are already saved in the network configuration
-        checkActiveNetworks();
-    }
-
-    @Override
     public void onPause() {
         super.onPause();
         unregisterBroadcastReceivers();
@@ -203,12 +229,24 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
     public void onResume() {
         super.onResume();
         registerBroadcastReceivers();
+        // Check which Networks are already saved in the network configuration
+        checkActiveNetworks();
+
+        // The service could have finished while no Broadcast Receiver was registered that could have received the signal to set showProgress to false;
+        if(showProgress && (isAddAllNetworkServiceRunning() || isRemoveAllNetworkServiceRunning())){
+            showProgressBar(progress_max_value);
+            updateProgressBar(last_progress_value);
+        }
+        else{
+            showProgress = false;
+        }
     }
 
 
     @Override
     public void onPauseFragment() {
-
+        // Save the last filter term. It is necessary to recreate the last search if the user swiped/paged to a different tab.
+        last_filter_term = searchView.getQuery().toString();
     }
 
     @Override
@@ -262,6 +300,28 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         mListener = null;
         // Save the last filter term. It is necessary to recreate the last search if the screen was rotated.
         last_filter_term = searchView.getQuery().toString();
+    }
+
+    private void showProgressBar(int maxValue) {
+        showProgress = true;
+        progress_max_value = maxValue;
+        progressBar.setMax(maxValue);
+        tv_progress.setText("0/" + progress_max_value);
+        relativeLayout.setVisibility(RelativeLayout.GONE);
+        searchView.setVisibility(SearchView.GONE);
+        linearLayout.setVisibility(LinearLayout.VISIBLE);
+    }
+
+    private void hideProgressBar(){
+        showProgress = false;
+        linearLayout.setVisibility(LinearLayout.GONE);
+        searchView.setVisibility(SearchView.VISIBLE);
+        relativeLayout.setVisibility(RelativeLayout.VISIBLE);
+    }
+
+    private void updateProgressBar(int value){
+        progressBar.setProgress(value);
+        tv_progress.setText(value + "/" + progress_max_value);
     }
 
     private void getSSIDs() throws IOException {
@@ -453,7 +513,8 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         // Add only currently shown networks
         // Tell Activity to show a ProgressDialog
         int progressBarMax = shownNetworks.size();
-        mListener.showProgressDialog(progressBarMax);
+        showProgressBar(progressBarMax);
+        //mListener.showProgressDialog(progressBarMax);
 
         //Start AddAllNetworksService
         Intent intent = new Intent(getActivity(), AddAllNetworksService.class);
@@ -464,7 +525,8 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
     public void removeAllNetworks(){
         // Tell Activity to show a ProgressDialog
         int progressBarMax = shownNetworks.size();
-        mListener.showProgressDialog(progressBarMax);
+        showProgressBar(progressBarMax);
+        //mListener.showProgressDialog(progressBarMax);
 
         //Start RemoveAllNetworksService
         Intent intent = new Intent(getActivity(), RemoveAllNetworksService.class);
@@ -472,6 +534,26 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         getActivity().startService(intent);
     }
 
+
+    private boolean isAddAllNetworkServiceRunning(){
+        ActivityManager manager = (ActivityManager) getActivity().getSystemService(Activity.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (AddAllNetworksService.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isRemoveAllNetworkServiceRunning(){
+        ActivityManager manager = (ActivityManager) getActivity().getSystemService(Activity.ACTIVITY_SERVICE);
+        for( ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if(RemoveAllNetworksService.class.getName().equals((service.service.getClassName()))) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * This interface must be implemented by activities that contain this
