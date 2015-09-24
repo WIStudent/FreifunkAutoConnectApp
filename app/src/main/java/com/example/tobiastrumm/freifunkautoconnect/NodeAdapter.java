@@ -54,8 +54,8 @@ public class NodeAdapter extends ArrayAdapter<Node>{
         }
         else{
             double distance_km = node.distance / 1000.0d;
-            String distance_string = new DecimalFormat("###.0000").format(distance_km);
-            viewHolder.tv_distance.setText(distance_string + "km");
+            String distance_string = new DecimalFormat("###.000").format(distance_km);
+            viewHolder.tv_distance.setText(distance_string + " km");
         }
         return convertView;
     }

@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -54,21 +55,26 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
     private RelativeLayout relativeLayout;
     private boolean showProgress;
 
+    private int last_orientation;
+
+    private SwipeRefreshLayout swipeContainer;
 
     private FindNearestNodesResponseReceiver findNearestNodesResponseReceiver;
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Node n = nodes.get(position);
-        // geo:0,0?q=lat,lng(label)
-        Uri geoLocation = Uri.parse("geo:0,0?q=" + n.lat + "," + n.lon + "(" + n.name + ")");
-        Intent navIntent = new Intent(Intent.ACTION_VIEW);
-        navIntent.setData(geoLocation);
-        if(navIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-            Intent chooser = Intent.createChooser(navIntent, "Select app");
-            startActivity(chooser);
+        // Dont let the user click on a network if the list is updated.
+        if(!swipeContainer.isRefreshing()) {
+            Node n = nodes.get(position);
+            // geo:0,0?q=lat,lng(label)
+            Uri geoLocation = Uri.parse("geo:0,0?q=" + n.lat + "," + n.lon + "(" + n.name + ")");
+            Intent navIntent = new Intent(Intent.ACTION_VIEW);
+            navIntent.setData(geoLocation);
+            if (navIntent.resolveActivity(getActivity().getPackageManager()) != null) {
+                Intent chooser = Intent.createChooser(navIntent, "Select app");
+                startActivity(chooser);
+            }
         }
-
     }
 
     private class FindNearestNodesResponseReceiver extends BroadcastReceiver {
@@ -94,7 +100,9 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
                     Log.w(TAG, "Broadcast Receiver: FindNearestNodesService responded: Something went wrong.");
                     break;
             }
+            // Stop ProgresBar and swipeContainer
             hideProgressBar();
+            swipeContainer.setRefreshing(false);
         }
     }
 
@@ -119,6 +127,7 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
         setupBroadcastReceivers();
         nodes = new ArrayList<>();
         last_updated_text = "Last updated: -";
+        last_orientation = getResources().getConfiguration().orientation;
     }
 
     @Override
@@ -139,11 +148,26 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
 
         progressBar = (ProgressBar)view.findViewById(R.id.progressbar_loading);
 
+        swipeContainer = (SwipeRefreshLayout) view.findViewById(R.id.sc_nearest_nodes);
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                // Start FindNearestNodeService
+                startFindNearestNodesService();
+            }
+        });
+        // Configure the refreshing colors
+        swipeContainer.setColorSchemeResources(android.R.color.holo_blue_bright,
+                android.R.color.holo_green_light,
+                android.R.color.holo_orange_light,
+                android.R.color.holo_red_light);
+
         return view;
     }
 
 
     private void showProgressBar(){
+
         if(progressBar != null){
             showProgress = true;
             relativeLayout.setVisibility(RelativeLayout.GONE);
@@ -159,12 +183,23 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
         }
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Call startFineNearestNodesService if the execution of onStart was not caused by a change in orientation.
+        int new_orientation = getResources().getConfiguration().orientation;
+        if(new_orientation == last_orientation){
+            startFindNearestNodesServiceWithProgressBar();
+        }
+        last_orientation = new_orientation;
+    }
 
     @Override
     public void onPause() {
         super.onPause();
         unregisterBroadcastReceivers();
     }
+
 
     @Override
     public void onResume() {
@@ -187,12 +222,32 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
 
     @Override
     public void onResumeFragment() {
-        showProgressBar();
+        // Dont start it if it is already running.
+        if(!isFindNearestNodesServiceRunning()){
+            startFindNearestNodesServiceWithProgressBar();
+        }
+
+    }
+
+    /**
+     * Starts FindNearestNodesService
+     */
+    private void startFindNearestNodesService(){
         // Start FindNearestNodesService
         Intent intent = new Intent(getActivity(), FindNearestNodesService.class);
         getActivity().startService(intent);
-
     }
+
+    /**
+     * Shows ProgressBar and starts the FindNearestNodesService
+     */
+    private void startFindNearestNodesServiceWithProgressBar(){
+        // Show ProgressBar
+        showProgressBar();
+        startFindNearestNodesService();
+    }
+
+
 
     @Override
     public void onAttach(Activity activity) {
@@ -230,7 +285,7 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
     private boolean isFindNearestNodesServiceRunning(){
         ActivityManager manager = (ActivityManager) getActivity().getSystemService(Activity.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (FindNearestNodesResponseReceiver.class.getName().equals(service.service.getClassName())) {
+            if (FindNearestNodesService.class.getName().equals(service.service.getClassName())) {
                 return true;
             }
         }

@@ -3,7 +3,6 @@
     android:layout_height="match_parent"
     tools:context="com.example.tobiastrumm.freifunkautoconnect.AddRemoveNetworksFragment">
 
-
     <LinearLayout
         android:id="@+id/ll_add_remove_networks"
         android:orientation="vertical"
@@ -11,8 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:padding="50dp"
-        android:visibility="gone"
-        >
+        android:visibility="gone">
 
         <ProgressBar
             android:id="@+id/progressbar_add_remove_networks"
@@ -20,6 +18,7 @@
             android:layout_height="wrap_content"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_gravity="center_horizontal"/>
+
         <TextView
             android:id="@+id/tv_progresbar"
             android:layout_width="wrap_content"
@@ -33,30 +32,23 @@
         android:id="@+id/rl_add_remove_networks"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <TableLayout
-            android:id="@+id/tableLayout"
-            android:paddingLeft="@dimen/activity_vertical_margin"
-            android:paddingRight="@dimen/activity_vertical_margin"
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:id="@+id/tableLayout"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true"
-
-            android:layout_alignParentStart="true">
-
-            <TableRow
-                style="?android:attr/buttonBarStyle"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:weightSum="2"
-                tools:ignore="UselessParent">
-
+            android:background="?attr/colorPrimary"
+            android:layout_alignParentStart="true"
+            android:weightSum="2">
                 <Button
                     style="?android:attr/buttonBarButtonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/btn_add_all"
                     android:id="@+id/btn_add_all"
+                    android:textColor="@android:color/white"
                     android:layout_weight="1" />
 
 
@@ -66,16 +58,18 @@
                     android:layout_height="wrap_content"
                     android:text="@string/btn_remove_all"
                     android:id="@+id/btn_remove_all"
+                    android:textColor="@android:color/white"
                     android:layout_weight="1" />
-            </TableRow>
-        </TableLayout>
+        </LinearLayout>
+
         <ListView
             android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
+            android:layout_height="match_parent"
             android:id="@+id/lv_networks"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
             android:layout_above="@id/tableLayout"
             android:headerDividersEnabled="true" />
+
     </RelativeLayout>
 </FrameLayout>
