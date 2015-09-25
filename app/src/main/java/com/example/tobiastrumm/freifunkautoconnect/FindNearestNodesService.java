@@ -36,7 +36,6 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
     public static final String RETURN_NODES = "return_nodes";
     public static final String RETURN_LAST_UPDATE = "return_last_update";
 
-
     private GoogleApiClient mGoogleApiClient;
 
     private boolean showOfflineNodes;
@@ -109,15 +108,7 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
     }
 
     private void updateNodesJson() {
-    }
-
-    private void calculateManhattanDistance(Node[] nodes, Location location) {
-        double lat = location.getLatitude();
-        double lon = location.getLongitude();
-
-        for (Node node : nodes) {
-            node.distance = Math.abs(node.lat - lat) + Math.abs(node.lon - lon);
-        }
+        // TODO: Implement fetching new nodes.json from server.
     }
 
     protected synchronized void buildGoogleApiClient() {
@@ -143,14 +134,12 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
                 updateNodesJson();
                 Node[] nodes = getNodesFromJson(json);
                 Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-                calculateManhattanDistance(nodes, mLastLocation);
                 Node[] nearest_nodes = getNearestNodes(nodes, mLastLocation);
+
                 Log.d(TAG, "Current location: lat: " + mLastLocation.getLatitude() + " lon: " + mLastLocation.getLongitude());
-
-        for(int i = 0; i<nearest_nodes.length; i++){
-            Log.d(TAG, "name: " + nearest_nodes[i].name + " online: " + nearest_nodes[i].online + " lat: " + nearest_nodes[i].lat + " lon: " + nearest_nodes[i].lon + " dist: " + nearest_nodes[i].distance);
-        }
-
+                for(Node n: nearest_nodes){
+                    Log.d(TAG, "name: " + n.name + " online: " + n.online + " lat: " + n.lat + " lon: " + n.lon + " dist: " + n.distance);
+                }
 
                 long last_update;
                 try {
@@ -181,6 +170,18 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
     }
 
     private Node[] getNearestNodes(Node[] nodes, Location location) {
+        long startTime = System.currentTimeMillis();
+        // Calculate distance between nodes and current position in meters.
+        for(Node n: nodes){
+            Location locationNode = new Location("nodes.json");
+            locationNode.setLatitude(n.lat);
+            locationNode.setLongitude(n.lon);
+            n.distance = location.distanceTo(locationNode);
+        }
+        long stopTime = System.currentTimeMillis();
+        long elapsedTime = stopTime - startTime;
+        Log.d(TAG, "Duration calculating distances: " + elapsedTime + " ms");
+
         Arrays.sort(nodes, new Comparator<Node>(){
 
             @Override
@@ -199,17 +200,6 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
                 j++;
             }
             k++;
-        }
-        for(Node n: nearest_nodes){
-            Log.d(TAG, "name: " + n.name + " online: " + n.online + " lat: " + n.lat + " lon: " + n.lon + " dist: " + n.distance);
-        }
-
-        // Calculate distance between nodes and current position in meters.
-        for(int i = 0; i<nearest_nodes.length; i++){
-            Location locationNode = new Location("Node" + i);
-            locationNode.setLatitude(nearest_nodes[i].lat);
-            locationNode.setLongitude(nearest_nodes[i].lon);
-            nearest_nodes[i].distance = location.distanceTo(locationNode);
         }
         return nearest_nodes;
     }
