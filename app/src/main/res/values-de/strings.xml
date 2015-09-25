@@ -28,4 +28,5 @@
     <string name="nearest_freifunk">Freifunk in der Nähe</string>
     <string name="pref_nearest_ap_number">Anzahl der anzuzeigenden Freifunk-Netze</string>
     <string name="pref_nearest_ap_offline">Zeige offline Freifunk-Netze an</string>
+    <string name="open_coordinates_with">Öffne Koordinaten mit</string>
 </resources>

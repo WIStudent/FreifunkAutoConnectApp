@@ -42,4 +42,5 @@
     <string name="offline">Offline</string>
     <string name="ssids">SSIDs</string>
     <string name="nearest_freifunk">Nearest Freifunk</string>
+    <string name="open_coordinates_with">Open coordinates with</string>
 </resources>

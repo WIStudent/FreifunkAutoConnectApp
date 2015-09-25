@@ -71,7 +71,7 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
             Intent navIntent = new Intent(Intent.ACTION_VIEW);
             navIntent.setData(geoLocation);
             if (navIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-                Intent chooser = Intent.createChooser(navIntent, "Select app");
+                Intent chooser = Intent.createChooser(navIntent, getString(R.string.open_coordinates_with));
                 startActivity(chooser);
             }
         }
