@@ -1,6 +1,7 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,10 +44,12 @@ public class NodeAdapter extends ArrayAdapter<Node>{
         viewHolder.tv_name.setText(node.name);
 
         if(node.online){
-            viewHolder.tv_status.setText("Status: Online");
+            viewHolder.tv_status.setText(getContext().getString(R.string.online));
+            viewHolder.tv_status.setTextColor(getContext().getResources().getColor(R.color.abc_secondary_text_material_light));
         }
         else{
-            viewHolder.tv_status.setText("Status: Offline");
+            viewHolder.tv_status.setText(getContext().getString(R.string.offline));
+            viewHolder.tv_status.setTextColor(Color.RED);
         }
 
         if(node.distance < 1000){

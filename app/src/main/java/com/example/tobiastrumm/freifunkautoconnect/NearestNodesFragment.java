@@ -92,7 +92,7 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
                     long timestamp = intent.getLongExtra(FindNearestNodesService.RETURN_LAST_UPDATE, 0);
                     String last_update_string_date = DateFormat.getDateFormat(getActivity()).format(new Date(timestamp * 1000));
                     String last_update_string_time = DateFormat.getTimeFormat(getActivity()).format(new Date(timestamp * 1000));
-                    last_updated_text = "Last updated: " + last_update_string_date + " " + last_update_string_time;
+                    last_updated_text = getString(R.string.last_data_update) + last_update_string_date + " " + last_update_string_time;
                     tv_last_update.setText(last_updated_text);
                     break;
                 case FindNearestNodesService.STATUS_TYPE_ERROR:
@@ -126,7 +126,7 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
         setRetainInstance(true);
         setupBroadcastReceivers();
         nodes = new ArrayList<>();
-        last_updated_text = "Last updated: -";
+        last_updated_text = getString(R.string.last_data_update) + "-";
         last_orientation = getResources().getConfiguration().orientation;
     }
 

@@ -7,13 +7,14 @@ import android.view.ViewGroup;
 
 public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
     private final int PAGE_COUNT = 2;
-    private String tabTitles[] = new String[] {"SSIDs", "Nearest AP"};
+    private String tabTitles[];
 
     public AddRemoveNetworksFragment addRemoveNetworksFragment;
     public NearestNodesFragment nearestNodesFragment;
 
-    public MyFragmentPagerAdapter(FragmentManager fm){
+    public MyFragmentPagerAdapter(FragmentManager fm, String tabTitles[]){
         super(fm);
+        this.tabTitles = tabTitles;
     }
     @Override
     public Fragment getItem(int position) {
@@ -55,6 +56,9 @@ public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public CharSequence getPageTitle(int position) {
-        return tabTitles[position];
+        if(position<tabTitles.length){
+            return tabTitles[position];
+        }
+        return "";
     }
 }

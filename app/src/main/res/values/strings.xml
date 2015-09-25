@@ -33,10 +33,13 @@
     <string name="preference_file_key">com.example.tobiastrumm.freifunkautoconnect.PREFERENCE_FILE_KEY</string>
     <string name="preference_timestamp_last_ssid_download">timestamp_last_ssid_download</string>
     <string name="message_ssids_updated">SSID list was updated.</string>
-
-<!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="pref_nearest_ap">Nearest Access Points</string>
     <string name="pref_nearest_ap_number">Number of access points to show</string>
     <string name="pref_nearest_ap_offline">Show offline access points</string>
+    <string name="last_data_update">Last data update:&#160;</string>
+    <string name="status">Status:&#160;</string>
+    <string name="online">Online</string>
+    <string name="offline">Offline</string>
+    <string name="ssids">SSIDs</string>
+    <string name="nearest_freifunk">Nearest Freifunk</string>
 </resources>
