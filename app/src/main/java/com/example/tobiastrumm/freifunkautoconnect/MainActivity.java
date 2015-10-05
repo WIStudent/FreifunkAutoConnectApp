@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
         setSupportActionBar(toolbar);
 
         // Setup Tabs and Fragments
-        String titles[] =  {getString(R.string.ssids), getString(R.string.nearest_freifunk)};
+        String titles[] =  {getString(R.string.nearest_freifunk), getString(R.string.ssids)};
         myFragmentPagerAdapter = new MyFragmentPagerAdapter(getFragmentManager(), titles);
 
         ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
@@ -163,10 +163,10 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
                 FragmentLifecycle fragmentToShow;
                 switch (newPosition) {
                     case 0:
-                        fragmentToShow = (FragmentLifecycle) myFragmentPagerAdapter.addRemoveNetworksFragment;
+                        fragmentToShow = (FragmentLifecycle) myFragmentPagerAdapter.nearestNodesFragment;
                         break;
                     case 1:
-                        fragmentToShow = (FragmentLifecycle) myFragmentPagerAdapter.nearestNodesFragment;
+                        fragmentToShow = (FragmentLifecycle) myFragmentPagerAdapter.addRemoveNetworksFragment;
                         break;
                     default:
                         fragmentToShow = new FragmentLifecycle() {
@@ -183,10 +183,10 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
                 FragmentLifecycle fragmentToHide;
                 switch (currentPosition) {
                     case 0:
-                        fragmentToHide = (FragmentLifecycle) myFragmentPagerAdapter.addRemoveNetworksFragment;
+                        fragmentToHide = (FragmentLifecycle) myFragmentPagerAdapter.nearestNodesFragment;
                         break;
                     case 1:
-                        fragmentToHide = (FragmentLifecycle) myFragmentPagerAdapter.nearestNodesFragment;
+                        fragmentToHide = (FragmentLifecycle) myFragmentPagerAdapter.addRemoveNetworksFragment;
                         break;
                     default:
                         fragmentToHide = new FragmentLifecycle() {

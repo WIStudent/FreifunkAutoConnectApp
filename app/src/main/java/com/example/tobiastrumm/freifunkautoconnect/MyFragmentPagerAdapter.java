@@ -20,9 +20,10 @@ public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
     public Fragment getItem(int position) {
         switch(position){
             case 0:
-                return AddRemoveNetworksFragment.newInstance();
-            case 1:
                 return NearestNodesFragment.newInstance();
+            case 1:
+                return AddRemoveNetworksFragment.newInstance();
+
             default:
                 return null;
         }
@@ -45,10 +46,10 @@ public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
         Fragment createdFragment = (Fragment) super.instantiateItem(container, position);
         switch(position){
             case 0:
-                addRemoveNetworksFragment = (AddRemoveNetworksFragment) createdFragment;
+                nearestNodesFragment = (NearestNodesFragment) createdFragment;
                 break;
             case 1:
-                nearestNodesFragment = (NearestNodesFragment) createdFragment;
+                addRemoveNetworksFragment = (AddRemoveNetworksFragment) createdFragment;
                 break;
         }
         return createdFragment;
