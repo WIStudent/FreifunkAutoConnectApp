@@ -83,7 +83,6 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
     private ProgressBar progressBar;
     private TextView tv_progress;
     private boolean showProgress;
-    private int last_progress_value;
     private int progress_max_value;
 
     private class AddAllNetworksResponseReceiver extends BroadcastReceiver{
@@ -235,10 +234,9 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         // The service could have finished while no Broadcast Receiver was registered that could have received the signal to set showProgress to false;
         if(showProgress && (isAddAllNetworkServiceRunning() || isRemoveAllNetworkServiceRunning())){
             showProgressBar(progress_max_value);
-            updateProgressBar(last_progress_value);
         }
         else{
-            showProgress = false;
+            hideProgressBar();
         }
     }
 
@@ -315,7 +313,9 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
     private void hideProgressBar(){
         showProgress = false;
         linearLayout.setVisibility(LinearLayout.GONE);
-        searchView.setVisibility(SearchView.VISIBLE);
+        if(searchView != null){
+            searchView.setVisibility(SearchView.VISIBLE);
+        }
         relativeLayout.setVisibility(RelativeLayout.VISIBLE);
     }
 
@@ -514,6 +514,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         // Tell Activity to show a ProgressDialog
         int progressBarMax = shownNetworks.size();
         showProgressBar(progressBarMax);
+        updateProgressBar(0);
         //mListener.showProgressDialog(progressBarMax);
 
         //Start AddAllNetworksService
@@ -526,6 +527,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         // Tell Activity to show a ProgressDialog
         int progressBarMax = shownNetworks.size();
         showProgressBar(progressBarMax);
+        updateProgressBar(0);
         //mListener.showProgressDialog(progressBarMax);
 
         //Start RemoveAllNetworksService
