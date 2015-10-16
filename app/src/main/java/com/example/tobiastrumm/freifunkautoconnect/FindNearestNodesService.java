@@ -141,7 +141,6 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
     }
 
     private JSONObject updateNodesJson() {
-        // TODO: Implement fetching new nodes.json from server.
         StringBuilder builder = new StringBuilder();
         JSONObject downloaded_nodes_json = null;
         try {

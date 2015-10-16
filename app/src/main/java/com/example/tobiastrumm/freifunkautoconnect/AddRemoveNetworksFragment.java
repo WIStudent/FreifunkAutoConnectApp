@@ -515,7 +515,6 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         int progressBarMax = shownNetworks.size();
         showProgressBar(progressBarMax);
         updateProgressBar(0);
-        //mListener.showProgressDialog(progressBarMax);
 
         //Start AddAllNetworksService
         Intent intent = new Intent(getActivity(), AddAllNetworksService.class);
@@ -528,7 +527,6 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         int progressBarMax = shownNetworks.size();
         showProgressBar(progressBarMax);
         updateProgressBar(0);
-        //mListener.showProgressDialog(progressBarMax);
 
         //Start RemoveAllNetworksService
         Intent intent = new Intent(getActivity(), RemoveAllNetworksService.class);
@@ -577,13 +575,6 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
          * Should open a dialog to confirm that all shown networks should be removed from the network configuration.
          */
         public void showDialogRemoveAllNetworks();
-
-        /**
-         * Should open a ProgressDialog with progressBarMax as max value. Get the current progress by listening to
-         * the broadcast of AddAllNetworksService and RemoveAllNetworksService
-         * @param progressBarMax
-         */
-        public void showProgressDialog(int progressBarMax);
     }
 
 }
