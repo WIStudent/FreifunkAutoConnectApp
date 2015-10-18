@@ -217,13 +217,18 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
                 long currentTime = System.currentTimeMillis() / 1000L;
                 if((currentTime - last_update) > UPDATE_INTERVAL ){
                     Log.d(TAG, "Local " + NODES_JSON_FILE_NAME + " file is older than UPDATE_INTERVAL (" + UPDATE_INTERVAL + " sec). Start downloading new " + NODES_JSON_FILE_NAME +  " file from " + NODES_JSON_URL);
-                    json = updateNodesJson();
-                    try {
-                        last_update = json.getLong("timestamp");
-                    } catch (JSONException e) {
-                        responseError();
-                        return;
+                    // Only use the new nodes.json file if updateNodesJson() didn't return null
+                    JSONObject json_updated = updateNodesJson();
+                    if(json_updated != null){
+                        json = json_updated;
+                        try {
+                            last_update = json.getLong("timestamp");
+                        } catch (JSONException e) {
+                            responseError();
+                            return;
+                        }
                     }
+
                 }
                 Node[] nodes = getNodesFromJson(json);
                 Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);

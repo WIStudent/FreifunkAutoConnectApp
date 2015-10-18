@@ -1,6 +1,12 @@
 # Change Log
 
 ## [unreleased] [unreleased]
+### Added
+- The app can now show the nearest Freifunk access points to the location of the device.
+
+### Changed
+- The UI was improved.
+
 ### Fixed
 - Fixed a problem where new SSIDs weren't shown when the filter function was used right after the list of SSIDs was updated.
 
