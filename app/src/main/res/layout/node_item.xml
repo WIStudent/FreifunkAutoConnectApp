@@ -55,5 +55,6 @@
         android:layout_alignParentEnd="true"
         android:textSize="@dimen/abc_text_size_subhead_material"
         android:paddingTop="10dp"
-        android:textColor="@color/abc_primary_text_material_light"/>
+        android:textColor="@color/abc_primary_text_material_light"
+        android:gravity="right"/>
 </RelativeLayout>

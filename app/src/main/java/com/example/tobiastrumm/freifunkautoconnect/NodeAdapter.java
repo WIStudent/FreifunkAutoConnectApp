@@ -53,7 +53,7 @@ public class NodeAdapter extends ArrayAdapter<Node>{
         }
 
         if(node.distance < 1000){
-            viewHolder.tv_distance.setText((int)node.distance +  "m");
+            viewHolder.tv_distance.setText((int)node.distance +  " m");
         }
         else{
             double distance_km = node.distance / 1000.0d;
