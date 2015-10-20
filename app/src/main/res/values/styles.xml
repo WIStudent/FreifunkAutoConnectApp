@@ -17,4 +17,16 @@
         <item name="android:textColorPrimary">@color/actionbar_title_text</item>
     </style>
 
+    <style name="MyCustomTabLayout" parent="Widget.Design.TabLayout">
+        <item name="tabTextAppearance">@style/MyCustomTabText</item>
+        <item name="tabIndicatorColor">@android:color/white</item>
+        <item name="android:background">?attr/colorPrimary</item>
+        <item name="tabSelectedTextColor">@android:color/white</item>
+    </style>
+
+    <style name="MyCustomTabText" parent="TextAppearance.AppCompat.Body1">
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
 </resources>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:paddingStart="?android:attr/listPreferredItemPaddingStart"
+    android:paddingEnd="?android:attr/listPreferredItemPaddingEnd"
+    android:paddingRight="?android:attr/listPreferredItemPaddingRight"
+    android:paddingLeft="?android:attr/listPreferredItemPaddingLeft">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/placeholder"
+        android:id="@+id/tv_node_item_name"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textSize="@dimen/abc_text_size_subhead_material"
+        android:layout_toLeftOf="@+id/tv_node_item_distance"
+        android:layout_toStartOf="@+id/tv_node_item_distance"
+        android:paddingTop="10dp"
+        android:textColor="@color/abc_primary_text_material_light"/>
+
+    <TextView
+        android:id="@+id/tv_node_item_status_pre"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/status"
+        android:layout_below="@+id/tv_node_item_name"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textSize="@dimen/abc_text_size_body_1_material"
+        android:paddingBottom="10dp"
+        android:textColor="@color/abc_secondary_text_material_light"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/placeholder"
+        android:id="@+id/tv_node_item_status"
+        android:layout_below="@+id/tv_node_item_name"
+        android:layout_toRightOf="@+id/tv_node_item_status_pre"
+        android:layout_toEndOf="@+id/tv_node_item_status_pre"
+        android:textSize="@dimen/abc_text_size_body_1_material"
+        android:paddingBottom="10dp"
+        android:textColor="@color/abc_secondary_text_material_light"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minEms="4"
+        android:text="@string/placeholder"
+        android:id="@+id/tv_node_item_distance"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:textSize="@dimen/abc_text_size_subhead_material"
+        android:paddingTop="10dp"
+        android:textColor="@color/abc_primary_text_material_light"
+        android:gravity="right"/>
+</RelativeLayout>
