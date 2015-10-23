@@ -13,7 +13,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
-import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -237,25 +236,6 @@ public class NotificationService extends Service {
             e.printStackTrace();
         }
 
-
-        // Read user defined ssids
-        // Check if external storage is available
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            File user_ssids = new File(Environment.getExternalStorageDirectory() + File.separator + AddRemoveNetworksFragment.DIRECTORY + File.separator + AddRemoveNetworksFragment.USER_SSIDS_FILE );
-            // Check if file exists
-            // If the file was found/created:
-            if(user_ssids.exists()){
-                is = new InputStreamReader(new FileInputStream(user_ssids));
-                reader = new BufferedReader(is);
-                while ((line = reader.readLine()) != null) {
-                    networks.add(new Network(line));
-                }
-            }
-            else{
-                Log.w(TAG, "Could not find.");
-            }
-        }
         Collections.sort(networks);
     }
 }

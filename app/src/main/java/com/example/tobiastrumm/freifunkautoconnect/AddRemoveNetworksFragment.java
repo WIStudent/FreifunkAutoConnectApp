@@ -8,12 +8,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.MediaScannerConnection;
-import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
@@ -59,9 +56,6 @@ import java.util.List;
 public class AddRemoveNetworksFragment extends Fragment implements AdapterView.OnItemClickListener, FragmentLifecycle{
 
     private static final String TAG = AddRemoveNetworksFragment.class.getSimpleName();
-
-    public static String DIRECTORY = "freifunkautoconnect";
-    public static String USER_SSIDS_FILE = "user_ssids.csv";
 
     private OnFragmentInteractionListener mListener;
 
@@ -365,71 +359,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
             e.printStackTrace();
         }
 
-
-        // Read user defined ssids
-        // Check if external storage is available
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-            File user_ssids = new File(Environment.getExternalStorageDirectory() + File.separator + DIRECTORY + File.separator + USER_SSIDS_FILE );
-            // Check if file exists
-            if(!user_ssids.exists()){
-                // If not, create the file
-                Log.i(TAG, "Start creation of user_ssids.csv file");
-                user_ssids = createUserSSIDFile();
-            }
-            else{
-                Log.i(TAG, "user_ssids.csv already exists");
-            }
-            // If the file was found/created:
-            if(user_ssids != null){
-                is = new InputStreamReader(new FileInputStream(user_ssids));
-                reader = new BufferedReader(is);
-                while ((line = reader.readLine()) != null) {
-                    allNetworks.add(new Network(line));
-                }
-            }
-            else{
-                Log.w(TAG, "Could not find or create user_ssids file.");
-            }
-        }
         Collections.sort(allNetworks);
-    }
-
-    private File createUserSSIDFile(){
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File directory = new File(Environment.getExternalStorageDirectory() + File.separator + DIRECTORY);
-            if(!directory.exists()){
-                // Create directory
-                Log.i(TAG, "Create freifunkautoconnect directory");
-                directory.mkdir();
-            }
-            File user_ssids = new File(directory, USER_SSIDS_FILE);
-            try {
-                // Create empty file
-                Log.i(TAG, "Create empty user_ssids.csv file");
-                user_ssids.createNewFile();
-            }
-            catch (IOException e) {
-                Log.w(TAG, "Could not create user_ssids.csv file.");
-                return null;
-            }
-
-            // Make sure that the new file will be visible if the device is connected to a pc over USB cable.
-            Log.i(TAG, "Scan for user_ssids.csv file");
-            MediaScannerConnection.scanFile(
-                    getActivity(),
-                    new String[]{directory.getAbsolutePath(), user_ssids.getAbsolutePath(),},
-                    null,
-                    new MediaScannerConnection.OnScanCompletedListener() {
-                        public void onScanCompleted(String path, Uri uri) {
-                            Log.i(TAG, "Scanned " + path + ":");
-                            Log.i(TAG, "-> uri=" + uri);
-                        }
-                    }
-            );
-        }
-        return null;
     }
 
     private void checkActiveNetworks(){
