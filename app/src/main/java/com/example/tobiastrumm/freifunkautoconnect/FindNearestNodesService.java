@@ -5,14 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;
+import com.mapzen.android.lost.api.LocationServices;
+import com.mapzen.android.lost.api.LostApiClient;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,7 +31,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 
-public class FindNearestNodesService extends IntentService implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class FindNearestNodesService extends IntentService {
 
     private final static String TAG = FindNearestNodesService.class.getSimpleName();
     private final static int DEFAULT_NUMBER_OF_NODES = 10;
@@ -49,12 +47,9 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
     public static final String RETURN_NODES = "return_nodes";
     public static final String RETURN_LAST_UPDATE = "return_last_update";
 
-    private GoogleApiClient mGoogleApiClient;
-
     private boolean showOfflineNodes;
     private int numberOfNodes;
 
-    private boolean googleApiClientRunning;
 
     public FindNearestNodesService(){
         super("FindNearestNodesService");
@@ -62,23 +57,15 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        googleApiClientRunning = true;
-        Log.d(TAG, "Build GoogleApiClient");
-        buildGoogleApiClient();
+
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(FindNearestNodesService.this);
         showOfflineNodes = sharedPreferences.getBoolean("pref_nearest_ap_show_offline_nodes", DEFAULT_SHOW_OFFLINE_NODES);
         numberOfNodes = sharedPreferences.getInt("pref_nearest_ap_number_nodes", DEFAULT_NUMBER_OF_NODES);
-        mGoogleApiClient.blockingConnect();
 
-        // Necessary so that the service keeps running until the other thread finishes the distance calculations.
-        while(googleApiClientRunning){
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        Log.d(TAG, "onHandleIntent is returning");
+        LostApiClient lostApiClient = new LostApiClient.Builder(this).build();
+        lostApiClient.connect();
+
+        onConnected();
     }
 
     private JSONObject getJsonFromLocalFile() {
@@ -183,69 +170,54 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
         }
     }
 
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
-    }
 
-    @Override
-    public void onConnected(Bundle bundle) {
-        // Necessary or the callback will be executed on the main/ui thread.
-        Thread thread = new Thread(){
-            @Override
-            public void run() {
-                Log.d(TAG, "GoogleApiClient: running onConnected");
-                JSONObject json = getJsonFromLocalFile();
-                if(json == null){
-                    responseError();
-                    return;
-                }
+    public void onConnected() {
+        JSONObject json = getJsonFromLocalFile();
+        if(json == null){
+            responseError();
+            return;
+        }
 
-                // Get timestamp from the last nodes.json file.
-                long last_update;
+        // Get timestamp from the last nodes.json file.
+        long last_update;
+        try {
+            last_update = json.getLong("timestamp");
+        } catch (JSONException e) {
+            responseError();
+            return;
+        }
+        // If the last nodes.json file is older than UPDATE_INTERVAL, check for new nodes.json file.
+        long currentTime = System.currentTimeMillis() / 1000L;
+        if((currentTime - last_update) > UPDATE_INTERVAL ){
+            Log.d(TAG, "Local " + NODES_JSON_FILE_NAME + " file is older than UPDATE_INTERVAL (" + UPDATE_INTERVAL + " sec). Start downloading new " + NODES_JSON_FILE_NAME +  " file from " + NODES_JSON_URL);
+            // Only use the new nodes.json file if updateNodesJson() didn't return null
+            JSONObject json_updated = updateNodesJson();
+            if(json_updated != null){
+                json = json_updated;
                 try {
                     last_update = json.getLong("timestamp");
                 } catch (JSONException e) {
                     responseError();
                     return;
                 }
-
-                // If the last nodes.json file is older than UPDATE_INTERVAL, check for new nodes.json file.
-                long currentTime = System.currentTimeMillis() / 1000L;
-                if((currentTime - last_update) > UPDATE_INTERVAL ){
-                    Log.d(TAG, "Local " + NODES_JSON_FILE_NAME + " file is older than UPDATE_INTERVAL (" + UPDATE_INTERVAL + " sec). Start downloading new " + NODES_JSON_FILE_NAME +  " file from " + NODES_JSON_URL);
-                    // Only use the new nodes.json file if updateNodesJson() didn't return null
-                    JSONObject json_updated = updateNodesJson();
-                    if(json_updated != null){
-                        json = json_updated;
-                        try {
-                            last_update = json.getLong("timestamp");
-                        } catch (JSONException e) {
-                            responseError();
-                            return;
-                        }
-                    }
-
-                }
-                Node[] nodes = getNodesFromJson(json);
-                Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-                Node[] nearest_nodes = getNearestNodes(nodes, mLastLocation);
-
-                Log.d(TAG, "Return nodes and timestamp");
-                // Return nearest nodes to fragment.
-                Intent localIntent = new Intent(BROADCAST_ACTION);
-                localIntent.putExtra(STATUS_TYPE, STATUS_TYPE_FINISHED);
-                localIntent.putExtra(RETURN_NODES, nearest_nodes);
-                localIntent.putExtra(RETURN_LAST_UPDATE, last_update);
-                LocalBroadcastManager.getInstance(FindNearestNodesService.this).sendBroadcast(localIntent);
-                googleApiClientRunning = false;
             }
-        };
-        thread.start();
-        Log.d(TAG, "onConnected is returning");
+        }
+        Node[] nodes = getNodesFromJson(json);
+
+        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation();
+        if(mLastLocation == null){
+            responseError();
+            return;
+        }
+        Node[] nearest_nodes = getNearestNodes(nodes, mLastLocation);
+
+        Log.d(TAG, "Return nodes and timestamp");
+        // Return nearest nodes to fragment.
+        Intent localIntent = new Intent(BROADCAST_ACTION);
+        localIntent.putExtra(STATUS_TYPE, STATUS_TYPE_FINISHED);
+        localIntent.putExtra(RETURN_NODES, nearest_nodes);
+        localIntent.putExtra(RETURN_LAST_UPDATE, last_update);
+        LocalBroadcastManager.getInstance(FindNearestNodesService.this).sendBroadcast(localIntent);
     }
 
     private void responseError(){
@@ -287,14 +259,5 @@ public class FindNearestNodesService extends IntentService implements GoogleApiC
             k++;
         }
         return nearest_nodes;
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-    }
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connectionResult) {
-        googleApiClientRunning = false;
     }
 }

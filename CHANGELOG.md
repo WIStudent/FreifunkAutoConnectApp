@@ -1,4 +1,10 @@
 # Change Log
+## [unreleased] - [unreleased]
+### Changed
+- Google Play services location API was replaced with [LOST](https://github.com/mapzen/LOST).
+
+### Fixed
+- Fixed crash that occurred if location service was disabled or airplane mode was enabled.
 
 ## [0.6] - 2015-10-24
 ### Added

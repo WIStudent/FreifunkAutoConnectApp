@@ -11,6 +11,33 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
+    <android.support.percent.PercentRelativeLayout
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/rl_location_warning"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:visibility="visible"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin">
+
+        <TextView
+            android:id="@+id/tv_location_warning"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            app:layout_marginTopPercent="30%"
+            android:gravity="center_horizontal"
+            android:text="@string/location_warning_text" />
+        <Button
+            android:id="@+id/btn_location_warning_retry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_location_warning"
+            android:layout_centerHorizontal="true"
+            android:text="@string/Retry"/>
+    </android.support.percent.PercentRelativeLayout>
+
+
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/rl_nearest_nodes"
         android:layout_width="match_parent"

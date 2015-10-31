@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.percent.PercentRelativeLayout;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.format.DateFormat;
@@ -17,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
@@ -54,6 +56,10 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
     private ProgressBar progressBar;
     private RelativeLayout relativeLayout;
     private boolean showProgress;
+
+    // GPS warning
+    private PercentRelativeLayout rl_location_warning;
+    private boolean showLocationWarning = false;
 
     private int last_orientation;
 
@@ -94,14 +100,16 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
                     String last_update_string_time = DateFormat.getTimeFormat(getActivity()).format(new Date(timestamp * 1000));
                     last_updated_text = getString(R.string.last_data_update) + last_update_string_date + " " + last_update_string_time;
                     tv_last_update.setText(last_updated_text);
+                    // show found nodes.
+                    showNodeList();
                     break;
                 case FindNearestNodesService.STATUS_TYPE_ERROR:
                     //TODO: Something went wrong
                     Log.w(TAG, "Broadcast Receiver: FindNearestNodesService responded: Something went wrong.");
+                    // Show error.
+                    showLocationWarning();
                     break;
             }
-            // Stop ProgresBar and swipeContainer
-            hideProgressBar();
             swipeContainer.setRefreshing(false);
         }
     }
@@ -148,6 +156,15 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
 
         progressBar = (ProgressBar)view.findViewById(R.id.progressbar_loading);
 
+        rl_location_warning = (PercentRelativeLayout)view.findViewById(R.id.rl_location_warning);
+        Button btn_location_warning_retry = (Button) view.findViewById(R.id.btn_location_warning_retry);
+        btn_location_warning_retry.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                NearestNodesFragment.this.startFindNearestNodesServiceWithProgressBar();
+            }
+        });
+
         swipeContainer = (SwipeRefreshLayout) view.findViewById(R.id.sc_nearest_nodes);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -167,7 +184,8 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
 
 
     private void showProgressBar(){
-
+        showLocationWarning = false;
+        rl_location_warning.setVisibility(RelativeLayout.GONE);
         if(progressBar != null){
             showProgress = true;
             relativeLayout.setVisibility(RelativeLayout.GONE);
@@ -175,12 +193,25 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
         }
     }
 
-    private void hideProgressBar(){
+    private void showNodeList(){
         if(progressBar != null){
             showProgress = false;
             progressBar.setVisibility(ProgressBar.GONE);
-            relativeLayout.setVisibility(RelativeLayout.VISIBLE);
+
         }
+        rl_location_warning.setVisibility(RelativeLayout.GONE);
+        showLocationWarning = false;
+        relativeLayout.setVisibility(RelativeLayout.VISIBLE);
+    }
+
+    private void showLocationWarning(){
+        showLocationWarning = true;
+        if(progressBar != null){
+            showProgress = false;
+            progressBar.setVisibility(ProgressBar.GONE);
+        }
+        relativeLayout.setVisibility(RelativeLayout.GONE);
+        rl_location_warning.setVisibility(RelativeLayout.VISIBLE);
     }
 
     @Override
@@ -211,6 +242,13 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
         }
         else{
             showProgress = false;
+        }
+
+        if(showLocationWarning){
+            showLocationWarning();
+        }
+        else if(!showProgress){
+            showNodeList();
         }
     }
 

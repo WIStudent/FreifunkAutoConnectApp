@@ -291,7 +291,10 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         super.onDetach();
         mListener = null;
         // Save the last filter term. It is necessary to recreate the last search if the screen was rotated.
-        last_filter_term = searchView.getQuery().toString();
+        if(searchView != null){
+            last_filter_term = searchView.getQuery().toString();
+        }
+
     }
 
     private void showProgressBar(int maxValue) {

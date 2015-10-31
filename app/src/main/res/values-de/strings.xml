@@ -26,7 +26,10 @@
     <string name="message_ssids_updated">Die Liste der SSIDs wurde aktualisiert.</string>
     <string name="last_data_update">Daten zuletzt aktualisiert:&#160;</string>
     <string name="nearest_freifunk">Freifunk in der Nähe</string>
+    <string name="pref_nearest_ap">Nächste Freifunk-Netze</string>
     <string name="pref_nearest_ap_number">Anzahl der anzuzeigenden Freifunk-Netze</string>
     <string name="pref_nearest_ap_offline">Zeige offline Freifunk-Netze an</string>
     <string name="open_coordinates_with">Öffne Koordinaten mit</string>
+    <string name="location_warning_text">Position konnte nicht bestimmt werden. Stelle sicher, dass GPS aktiviert und der Flugmodus deaktiviert ist.</string>
+    <string name="Retry">Erneut versuchen</string>
 </resources>
