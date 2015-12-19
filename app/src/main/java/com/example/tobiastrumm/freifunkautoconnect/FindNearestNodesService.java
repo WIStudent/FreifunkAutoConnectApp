@@ -30,13 +30,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.zip.GZIPInputStream;
 
 public class FindNearestNodesService extends IntentService {
 
     private final static String TAG = FindNearestNodesService.class.getSimpleName();
     private final static int DEFAULT_NUMBER_OF_NODES = 10;
     private final static boolean DEFAULT_SHOW_OFFLINE_NODES = false;
-    private final static String NODES_JSON_URL = "http://freifunkapp.tobiastrumm.de/nodes.json";
+    private final static String NODES_JSON_URL = "http://freifunkapp.tobiastrumm.de/nodes.json.gz";
     private final static String NODES_JSON_FILE_NAME = "nodes.json";
     private final static long UPDATE_INTERVAL = 65 * 60;
 
@@ -131,19 +132,31 @@ public class FindNearestNodesService extends IntentService {
         StringBuilder builder = new StringBuilder();
         JSONObject downloaded_nodes_json = null;
         try {
-            // Download nodes.json File.
+            // Download nodes.json.gz File.
             Log.d(TAG, "Start downloading " + NODES_JSON_FILE_NAME + " file");
             URL url = new URL(NODES_JSON_URL);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             int statusCode = urlConnection.getResponseCode();
             if (statusCode == HttpURLConnection.HTTP_OK) {
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                String encoding = urlConnection.getContentEncoding();
+                InputStream is = urlConnection.getInputStream();
+                InputStream responseStream;
+
+                // Download gzipped file
+                if(encoding != null && encoding.toLowerCase().contains("gzip")){
+                    responseStream = new BufferedInputStream(new GZIPInputStream(is));
+                    Log.d(TAG, NODES_JSON_URL + " is gzipped. Length: " +  urlConnection.getContentLength());
+                } else{
+                    responseStream = new BufferedInputStream(is);
+                    Log.d(TAG, NODES_JSON_URL + " is not gzipped. Length: " +  urlConnection.getContentLength());
+                }
+                BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream));
                 String line;
                 while ((line = reader.readLine()) != null) {
                     builder.append(line);
                 }
                 urlConnection.disconnect();
+
                 downloaded_nodes_json = new JSONObject(builder.toString());
 
                 // Write downloaded nodes.json to internal storage.
