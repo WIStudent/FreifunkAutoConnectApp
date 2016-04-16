@@ -30,6 +30,7 @@
     <string name="pref_nearest_ap_number">Anzahl der anzuzeigenden Freifunk-Netze</string>
     <string name="pref_nearest_ap_offline">Zeige offline Freifunk-Netze an</string>
     <string name="open_coordinates_with">Öffne Koordinaten mit</string>
-    <string name="location_warning_text">Position konnte nicht bestimmt werden. Stelle sicher, dass GPS aktiviert und der Flugmodus deaktiviert ist.</string>
+    <string name="location_warning_text">Position konnte nicht bestimmt werden. Stelle sicher, dass GPS aktiviert und der Flugmodus deaktiviert ist. Falls du Android 6.0 oder neuer nutzt, stelle sicher, dass die Berechtigung zum Ermitteln des Standortes erteilt wurde.</string>
     <string name="Retry">Erneut versuchen</string>
+    <string name="permission_settings">Öffne App-Einstellungen</string>
 </resources>

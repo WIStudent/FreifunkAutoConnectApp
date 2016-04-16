@@ -43,6 +43,7 @@
     <string name="ssids">SSIDs</string>
     <string name="nearest_freifunk">Nearest Freifunk</string>
     <string name="open_coordinates_with">Open coordinates with</string>
-    <string name="location_warning_text">Your location could not be determined. Make sure that GPS is enabled and airplane mode is disabled.</string>
+    <string name="location_warning_text">Your location could not be determined. Make sure that GPS is enabled and airplane mode is disabled. If you are using Android 6.0 or newer, make sure that the permission to access location was granted.</string>
     <string name="Retry">Retry</string>
+    <string name="permission_settings">Open App Settings</string>
 </resources>

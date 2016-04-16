@@ -1,5 +1,6 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.Fragment;
@@ -7,9 +8,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.percent.PercentRelativeLayout;
+import android.support.v13.app.FragmentCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.format.DateFormat;
@@ -38,9 +44,11 @@ import java.util.List;
  * Use the {@link NearestNodesFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class NearestNodesFragment extends Fragment implements AdapterView.OnItemClickListener, FragmentLifecycle{
+public class NearestNodesFragment extends Fragment implements AdapterView.OnItemClickListener, FragmentLifecycle, FragmentCompat.OnRequestPermissionsResultCallback{
 
     private final static String TAG = NearestNodesFragment.class.getSimpleName();
+
+    private final static int PERMISSION_REQUEST_FINE_LOCATION = 1;
 
     private OnFragmentInteractionListener mListener;
 
@@ -164,6 +172,20 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
                 NearestNodesFragment.this.startFindNearestNodesServiceWithProgressBar();
             }
         });
+        Button btn_location_warning_permission = (Button) view.findViewById(R.id.btn_location_warning_permission);
+        if(android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
+        {
+            // If the running Android OS is older than Android M (SDK 23), do not show this button
+            btn_location_warning_permission.setVisibility(View.GONE);
+        }
+        {
+            btn_location_warning_permission.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    NearestNodesFragment.this.openApplicationSettingsPage();
+                }
+            });
+        }
 
         swipeContainer = (SwipeRefreshLayout) view.findViewById(R.id.sc_nearest_nodes);
         swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -271,9 +293,49 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
      * Starts FindNearestNodesService
      */
     private void startFindNearestNodesService(){
-        // Start FindNearestNodesService
-        Intent intent = new Intent(getActivity(), FindNearestNodesService.class);
-        getActivity().startService(intent);
+
+        // Since API level 23 permissions must be requested at run time. FindNearestNodeService requires ACCESS_FINE_LOCATION
+        int permissionCheck = ContextCompat.checkSelfPermission(this.getActivity(), Manifest.permission.ACCESS_FINE_LOCATION);
+        if(permissionCheck == PackageManager.PERMISSION_GRANTED){
+            // Start FindNearestNodesService
+            Intent intent = new Intent(getActivity(), FindNearestNodesService.class);
+            getActivity().startService(intent);
+        }
+        else{
+            // Request permission
+            FragmentCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    PERMISSION_REQUEST_FINE_LOCATION);
+        }
+
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch(requestCode){
+            case PERMISSION_REQUEST_FINE_LOCATION:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    // The permission was granted. Start FineNearestNodesService
+                    Intent intent = new Intent(getActivity(), FindNearestNodesService.class);
+                    getActivity().startService(intent);
+                }
+                else{
+                    // The permission was denied. Inform the user about this.
+                    showLocationWarning();
+                }
+        }
+    }
+
+    /*
+        Open the Application's setting page
+     */
+    private void openApplicationSettingsPage(){
+        Intent intent = new Intent();
+        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        Uri uri = Uri.fromParts("package", this.getActivity().getPackageName(), null);
+        intent.setData(uri);
+        this.getActivity().startActivity(intent);
     }
 
     /**

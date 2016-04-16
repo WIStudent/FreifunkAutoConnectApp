@@ -35,6 +35,13 @@
             android:layout_below="@id/tv_location_warning"
             android:layout_centerHorizontal="true"
             android:text="@string/Retry"/>
+        <Button
+            android:id="@+id/btn_location_warning_permission"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/btn_location_warning_retry"
+            android:layout_centerHorizontal="true"
+            android:text="@string/permission_settings"/>
     </android.support.percent.PercentRelativeLayout>
 
 

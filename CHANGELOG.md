@@ -1,4 +1,9 @@
 # Change Log
+##[unreleased] - [unreleased]
+### Changed
+- Improved compatability
+- Retrive Freifunk node locations in a compressed file to save traffic
+
 ## [0.6.1] - 2015-10-31
 ### Changed
 - Google Play services location API was replaced with [LOST](https://github.com/mapzen/LOST).
