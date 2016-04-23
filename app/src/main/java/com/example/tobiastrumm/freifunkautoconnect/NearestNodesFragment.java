@@ -18,14 +18,14 @@ import android.support.v13.app.FragmentCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -44,7 +44,7 @@ import java.util.List;
  * Use the {@link NearestNodesFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class NearestNodesFragment extends Fragment implements AdapterView.OnItemClickListener, FragmentLifecycle, FragmentCompat.OnRequestPermissionsResultCallback{
+public class NearestNodesFragment extends Fragment implements NodeRecyclerAdapter.OnItemClickListener, FragmentLifecycle, FragmentCompat.OnRequestPermissionsResultCallback{
 
     private final static String TAG = NearestNodesFragment.class.getSimpleName();
 
@@ -53,8 +53,7 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
     private OnFragmentInteractionListener mListener;
 
     // ArrayList
-    private ArrayList<Node> nodes;
-    private NodeAdapter nodeAdapter;
+    private NodeRecyclerAdapter nodeRecyclerAdapter;
 
     // TextView last_update
     private TextView tv_last_update;
@@ -75,11 +74,13 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
 
     private FindNearestNodesResponseReceiver findNearestNodesResponseReceiver;
 
+
+    // Function that should be called if a node item in the RecyclerView is clicked.
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        // Dont let the user click on a network if the list is updated.
-        if(!swipeContainer.isRefreshing()) {
-            Node n = nodes.get(position);
+    public void onItemClick(View itemView, int layoutPosition, int adapterPosition) {
+        // Don't let the user click on a node if the list is being updated.
+        if(!swipeContainer.isRefreshing() && adapterPosition >= 0) {
+            Node n = nodeRecyclerAdapter.getNode(adapterPosition);
             // geo:0,0?q=lat,lng(label)
             Uri geoLocation = Uri.parse("geo:0,0?q=" + n.lat + "," + n.lon + "(" + n.name + ")");
             Intent navIntent = new Intent(Intent.ACTION_VIEW);
@@ -99,9 +100,8 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
                 case FindNearestNodesService.STATUS_TYPE_FINISHED:
                     Node[] received_nodes = (Node[])intent.getParcelableArrayExtra(FindNearestNodesService.RETURN_NODES);
                     List<Node> nodelist = Arrays.asList(received_nodes);
-                    nodes.clear();
-                    nodes.addAll(nodelist);
-                    nodeAdapter.notifyDataSetChanged();
+                    nodeRecyclerAdapter.clear();
+                    nodeRecyclerAdapter.addAll(nodelist);
 
                     long timestamp = intent.getLongExtra(FindNearestNodesService.RETURN_LAST_UPDATE, 0);
                     String last_update_string_date = DateFormat.getDateFormat(getActivity()).format(new Date(timestamp * 1000));
@@ -141,9 +141,13 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         setupBroadcastReceivers();
-        nodes = new ArrayList<>();
         last_updated_text = getString(R.string.last_data_update) + "-";
         last_orientation = getResources().getConfiguration().orientation;
+
+        // Setup NodeRecyclerAdapter
+        ArrayList<Node> nodes = new ArrayList<>();
+        nodeRecyclerAdapter = new NodeRecyclerAdapter(nodes);
+        nodeRecyclerAdapter.setOnItemClickListener(this);
     }
 
     @Override
@@ -154,10 +158,10 @@ public class NearestNodesFragment extends Fragment implements AdapterView.OnItem
 
         relativeLayout = (RelativeLayout)view.findViewById(R.id.rl_nearest_nodes);
 
-        nodeAdapter = new NodeAdapter(getActivity(), nodes);
-        ListView lv_nearest_nodes = (ListView) view.findViewById(R.id.lv_nearest_nodes);
-        lv_nearest_nodes.setAdapter(nodeAdapter);
-        lv_nearest_nodes.setOnItemClickListener(this);
+        // Setup RecyclerView
+        RecyclerView rv_nearest_nodes = (RecyclerView) view.findViewById(R.id.rv_nearest_nodes);
+        rv_nearest_nodes.setAdapter(nodeRecyclerAdapter);
+        rv_nearest_nodes.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         tv_last_update = (TextView)view.findViewById(R.id.tv_last_update);
         tv_last_update.setText(last_updated_text);
