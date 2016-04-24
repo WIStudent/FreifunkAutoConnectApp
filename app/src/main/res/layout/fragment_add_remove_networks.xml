@@ -62,14 +62,13 @@
                     android:layout_weight="1" />
         </LinearLayout>
 
-        <ListView
-            android:layout_width="wrap_content"
+        <android.support.v7.widget.RecyclerView
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/lv_networks"
+            android:id="@+id/rv_networks"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
-            android:layout_above="@id/tableLayout"
-            android:headerDividersEnabled="true" />
+            android:layout_above="@id/tableLayout" />
 
     </RelativeLayout>
 </FrameLayout>

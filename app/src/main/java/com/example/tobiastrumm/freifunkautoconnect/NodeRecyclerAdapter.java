@@ -82,7 +82,7 @@ public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapte
     }
 
     /**
-     * Returns the Node object at the passed position in the NodeRecyclerAdapter
+     * Returns pointer to the Node object at the passed position in the NodeRecyclerAdapter
      * @param adapterPosition Position in the NodeRecyclerAdapter
      * @return Pointer to the Node object in the NodeRecyclerAdapter
      */

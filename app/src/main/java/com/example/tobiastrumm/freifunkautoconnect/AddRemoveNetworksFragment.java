@@ -13,6 +13,8 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,9 +22,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+// TODO Maybe move the whole getSSID logic into the NodeRecyclerAdapter
 
 /**
  * A simple {@link Fragment} subclass.
@@ -53,18 +54,16 @@ import java.util.List;
  * Use the {@link AddRemoveNetworksFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AddRemoveNetworksFragment extends Fragment implements AdapterView.OnItemClickListener, FragmentLifecycle{
+public class AddRemoveNetworksFragment extends Fragment implements NetworkRecyclerAdapter.OnItemClickListener, FragmentLifecycle{
 
     private static final String TAG = AddRemoveNetworksFragment.class.getSimpleName();
 
     private OnFragmentInteractionListener mListener;
 
-    // ListView stuff
     private ArrayList<Network> allNetworks;
-    private ArrayList<Network> shownNetworks;
 
     // Network
-    private NetworkAdapter na;
+    private NetworkRecyclerAdapter networkRecyclerAdapter;
     private WifiManager wm;
 
     // SearchView
@@ -174,8 +173,11 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         catch(IOException e){
             // Could not read SSIDs from csv file.
         }
-        shownNetworks = new ArrayList<>(allNetworks);
         wm = (WifiManager) getActivity().getSystemService(Context.WIFI_SERVICE);
+
+        // Setup NodeRecyclerAdapter
+        networkRecyclerAdapter = new NetworkRecyclerAdapter(new ArrayList<>(allNetworks));
+        networkRecyclerAdapter.setOnItemClickListener(this);
     }
 
     @Override
@@ -189,11 +191,10 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         tv_progress = (TextView) view.findViewById(R.id.tv_progresbar);
         relativeLayout = (RelativeLayout) view.findViewById(R.id.rl_add_remove_networks);
 
-        ListView lv = (ListView) view.findViewById(R.id.lv_networks);
-        lv.setOnItemClickListener(this);
-
-        na = new NetworkAdapter(getActivity(), allNetworks, shownNetworks);
-        lv.setAdapter(na);
+        // Setup RecyclerView
+        RecyclerView rv = (RecyclerView) view.findViewById(R.id.rv_networks);
+        rv.setAdapter(networkRecyclerAdapter);
+        rv.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         // Set OnClickListeners for the buttons
         view.findViewById(R.id.btn_add_all).setOnClickListener(new View.OnClickListener() {
@@ -263,7 +264,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                na.getFilter().filter(newText);
+                networkRecyclerAdapter.getFilter().filter(newText);
                 return true;
             }
         });
@@ -375,42 +376,45 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
                 int index = Collections.binarySearch(wifiConf, n.ssid, new WifiConfigurationSSIDComparator());
                 n.active = index >= 0;
             }
-            na.notifyAllNetworksHasChangedReapplyFilter();
+            // Update networkRecyclerAdapter
+            networkRecyclerAdapter.clear();
+            networkRecyclerAdapter.addAll(allNetworks);
         }
 
     }
 
     @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        // Get the Network object that was clicked. Must be looked up in shownNetworks because it contains
-        // all Networks, that are currently shown in the ListView.
-        Network n = shownNetworks.get(position);
-        // If the network is already saved in the network configuration, remove it
-        if(n.active){
-            n.active = false;
-            List<WifiConfiguration> wificonf = wm.getConfiguredNetworks();
-            if(wificonf != null) {
-                for (WifiConfiguration wc : wificonf) {
-                    if (wc.SSID.equals(n.ssid)) {
-                        wm.removeNetwork(wc.networkId);
+    public void onItemClick(View itemView, int layoutPosition, int adapterPosition) {
+        if(adapterPosition >= 0) {
+            // Get the Network object that was clicked.
+            Network n = networkRecyclerAdapter.getNetwork(adapterPosition);
+            // If the network is already saved in the network configuration, remove it
+            if (n.active) {
+                List<WifiConfiguration> wificonf = wm.getConfiguredNetworks();
+                if (wificonf != null) {
+                    for (WifiConfiguration wc : wificonf) {
+                        if (wc.SSID.equals(n.ssid)) {
+                            // Only set active to false if the removal was successful
+                            n.active = !wm.removeNetwork(wc.networkId);
+                        }
                     }
                 }
             }
+            // If the network is not in the network configuration, add it.
+            else {
+                n.active = true;
+                // Add Network to network configuration
+                WifiConfiguration wc = new WifiConfiguration();
+                wc.SSID = n.ssid;
+                wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                int networkId = wm.addNetwork(wc);
+                wm.enableNetwork(networkId, false);
+            }
+            // Save configuration
+            wm.saveConfiguration();
+            // Notify the networkRecyclerAdapter that the item at adapterPosition was changed.
+            networkRecyclerAdapter.notifyItemChanged(adapterPosition);
         }
-        // If the network is not in the network configuration, add it.
-        else{
-            n.active = true;
-            // Add Network to network configuration
-            WifiConfiguration wc = new WifiConfiguration();
-            wc.SSID = n.ssid;
-            wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-            int networkId = wm.addNetwork(wc);
-            wm.enableNetwork(networkId, false);
-        }
-        // Save configuration
-        wm.saveConfiguration();
-        // Notify the NetworkAdapter that the content of ArrayList allNetworks was changed.
-        na.notifyDataSetChanged();
     }
 
     private void setupBroadcastReceivers(){
@@ -445,25 +449,25 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
     public void addAllNetworks(){
         // Add only currently shown networks
         // Tell Activity to show a ProgressDialog
-        int progressBarMax = shownNetworks.size();
+        int progressBarMax = networkRecyclerAdapter.getItemCount();
         showProgressBar(progressBarMax);
         updateProgressBar(0);
 
         //Start AddAllNetworksService
         Intent intent = new Intent(getActivity(), AddAllNetworksService.class);
-        intent.putParcelableArrayListExtra(AddAllNetworksService.INPUT_NETWORKS, shownNetworks);
+        intent.putParcelableArrayListExtra(AddAllNetworksService.INPUT_NETWORKS, new ArrayList<>(networkRecyclerAdapter.getShownNetworks()));
         getActivity().startService(intent);
     }
 
     public void removeAllNetworks(){
         // Tell Activity to show a ProgressDialog
-        int progressBarMax = shownNetworks.size();
+        int progressBarMax = networkRecyclerAdapter.getItemCount();
         showProgressBar(progressBarMax);
         updateProgressBar(0);
 
         //Start RemoveAllNetworksService
         Intent intent = new Intent(getActivity(), RemoveAllNetworksService.class);
-        intent.putParcelableArrayListExtra(RemoveAllNetworksService.INPUT_NETWORKS, shownNetworks);
+        intent.putParcelableArrayListExtra(RemoveAllNetworksService.INPUT_NETWORKS, new ArrayList<>(networkRecyclerAdapter.getShownNetworks()));
         getActivity().startService(intent);
     }
 
