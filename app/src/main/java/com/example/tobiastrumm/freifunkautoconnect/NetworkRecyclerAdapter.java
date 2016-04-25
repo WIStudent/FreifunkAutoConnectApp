@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -174,7 +175,7 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
             holder.itemView.setBackgroundColor(Color.parseColor("#8bc34a"));
         }
         else{
-            holder.itemView.setBackgroundResource(R.drawable.abc_item_background_holo_light);
+            holder.itemView.setBackgroundColor(ContextCompat.getColor(context, android.support.v7.appcompat.R.color.background_material_light));
         }
     }
 
