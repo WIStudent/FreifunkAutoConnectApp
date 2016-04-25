@@ -2,39 +2,90 @@ package com.example.tobiastrumm.freifunkautoconnect;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Filter;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecyclerAdapter.ViewHolder> {
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    private static final String TAG = NetworkRecyclerAdapter.class.getSimpleName();
+
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         TextView tv_ssid;
 
-        public ViewHolder(final View itemView) {
+        public ViewHolder(View itemView) {
             super(itemView);
             tv_ssid = (TextView) itemView.findViewById(R.id.tv_network_item_ssid);
 
             // Setup the click listener
-            itemView.setOnClickListener(new View.OnClickListener(){
-                @Override
-                public void onClick(View v) {
-                    // Triggers click upwards to the adapter on click
-                    if(listener != null){
-                        listener.onItemClick(itemView, getLayoutPosition(), getAdapterPosition());
+            itemView.setOnClickListener(this);
+        }
+
+        /*
+         * Handle the click on a ssid here. If the ssid is not already part of the network configuration, it
+         * will be added, else it will be removed.
+         */
+        @Override
+        public void onClick(View v) {
+            int adapterPosition = getAdapterPosition();
+            if(adapterPosition >= 0) {
+                // Get the Network object that was clicked.
+                Network n = getNetwork(adapterPosition);
+                // If the network is already saved in the network configuration, remove it
+                if (n.active) {
+                    List<WifiConfiguration> wificonf = wifiManager.getConfiguredNetworks();
+                    if (wificonf != null) {
+                        for (WifiConfiguration wc : wificonf) {
+                            if (wc.SSID.equals(n.ssid)) {
+                                // Only set active to false if the removal was successful
+                                n.active = !wifiManager.removeNetwork(wc.networkId);
+                            }
+                        }
                     }
                 }
-            });
+                // If the network is not in the network configuration, add it.
+                else {
+                    n.active = true;
+                    // Add Network to network configuration
+                    WifiConfiguration wc = new WifiConfiguration();
+                    wc.SSID = n.ssid;
+                    wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                    int networkId = wifiManager.addNetwork(wc);
+                    wifiManager.enableNetwork(networkId, false);
+                }
+                // Save configuration
+                wifiManager.saveConfiguration();
+                // Notify the networkRecyclerAdapter that the item at adapterPosition was changed.
+                notifyItemChanged(adapterPosition);
+            }
         }
     }
 
+    /*
+     * Necessary to filter the ssid list
+     */
     private class NetworkFilter extends Filter{
 
         @Override
@@ -72,11 +123,6 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
         }
     }
 
-    // Define the listener interface
-    public interface OnItemClickListener{
-        void onItemClick(View itemView, int layoutPosition, int adapterPosition);
-    }
-
     // List that holds all network elements
     private List<Network> allNetworks;
     // List that holds all network elements that should be shown in the RecycleView
@@ -86,17 +132,23 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
     private CharSequence constraint;
     private Filter mNetworkFilter;
 
-    // Listener member variable
-    private static OnItemClickListener listener;
+    private Context context;
+    private WifiManager wifiManager;
 
-    // Define the method that allows the parent fragment to define the listener
-    public void setOnItemClickListener(OnItemClickListener listener){
-        this.listener = listener;
-    }
 
-    public NetworkRecyclerAdapter(List<Network> networks) {
-        allNetworks = networks;
-        filteredNetworks = new ArrayList<>(networks);
+    public NetworkRecyclerAdapter(Context context) {
+        this.context = context;
+        wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+
+        allNetworks = new ArrayList<>();
+        filteredNetworks = new ArrayList<>();
+        try{
+            // Get the ssids from the ssids.json file
+            updateSSIDsFromJsonFile();
+        }
+        catch(IOException e){
+            // Could not read SSIDs from csv file.
+        }
     }
 
     @Override
@@ -108,8 +160,7 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
         View nodeView = inflater.inflate(R.layout.network_item, parent, false);
 
         // return a new holder instance
-        ViewHolder viewHolder = new ViewHolder(nodeView);
-        return viewHolder;
+        return new ViewHolder(nodeView);
     }
 
     @Override
@@ -144,25 +195,6 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
         return mNetworkFilter;
     }
 
-    /**
-     *  Clean all elements of the recycler
-     */
-    public void clear() {
-        allNetworks.clear();
-        filteredNetworks.clear();
-        notifyDataSetChanged();
-    }
-
-    /**
-     * Add a list of items to the recycler
-     * @param list
-     */
-    public void addAll(List<Network> list){
-        allNetworks.addAll(list);
-        // Filter again with the last constraint.
-        getFilter().filter(constraint);
-        notifyDataSetChanged();
-    }
 
     /**
      * Returns pointer to the Network object at the passed position in the NodeRecyclerAdapter
@@ -179,5 +211,78 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
      */
     public List<Network> getShownNetworks() {
         return filteredNetworks;
+    }
+
+    /**
+     * Updates the list of SSIDs by reading them from the ssids.json file. After that it checks
+     * which ssids are already included in the network configuration (This function simply calls
+     * updateNetworkStatus() at its end). It is NOT necessary to call notifyDataSetChanged() after
+     * this function was used.
+     * @throws IOException
+     */
+    public void updateSSIDsFromJsonFile() throws IOException {
+        // Check if ssids.json exists in internal storage.
+        File ssidsJson = context.getFileStreamPath("ssids.json");
+        if(!ssidsJson.exists()){
+            Log.d(TAG, "Copy ssids.json to internal storage.");
+            // If not, copy ssids.json from assets to internal storage.
+            FileOutputStream outputStream = context.openFileOutput("ssids.json", Context.MODE_PRIVATE);
+            InputStream inputStream = context.getAssets().open("ssids.json");
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while((bytesRead = inputStream.read(buffer)) != -1){
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            inputStream.close();
+            outputStream.close();
+            Log.d(TAG, "Finished copying ssids.json to internal storage");
+        }
+
+        // Read ssids.json from internal storage.
+        String jsonString = "";
+        InputStreamReader is = new InputStreamReader(new FileInputStream(ssidsJson));
+        BufferedReader reader = new BufferedReader(is);
+        String line;
+        while ((line = reader.readLine()) != null) {
+            jsonString += line;
+        }
+        reader.close();
+
+        // Read SSIDs from JSON file
+        allNetworks.clear();
+        try {
+            JSONObject json = new JSONObject(jsonString);
+            JSONArray ssidsJsonArray = json.getJSONArray("ssids");
+            for(int i = 0; i<ssidsJsonArray.length(); i++){
+                allNetworks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
+            }
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        Collections.sort(allNetworks);
+
+        // Update the status of the ssids
+        updateNetworkStatus();
+    }
+
+    /**
+     * Updates the list of SSIDs by checking which SSIDs are already included in the network configuration.
+     * It is NOT necessary to call notifyDataSetChanged() after this function was used.
+     */
+    public void updateNetworkStatus(){
+        // Check which Network is already added to the network configuration
+        List<WifiConfiguration> wifiConf = wifiManager.getConfiguredNetworks();
+        if (wifiConf != null) {
+            Collections.sort(wifiConf, new WifiConfigurationComparator());
+            for (Network n : allNetworks) {
+                // Search for the current network in the network configuration. If it is found (index will be >= 0), set active to true
+                int index = Collections.binarySearch(wifiConf, n.ssid, new WifiConfigurationSSIDComparator());
+                n.active = index >= 0;
+            }
+        }
+        // update filteredNetworks (and with it the RecycleView) by filtering with the last used constaint
+        getFilter().filter(constraint);
     }
 }
