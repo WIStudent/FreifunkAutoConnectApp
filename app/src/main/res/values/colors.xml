@@ -4,4 +4,8 @@
     <color name="primary_dark">#c2185b</color>
     <color name="accent">#536dfe</color>
     <color name="actionbar_title_text">#ffffff</color>
+    <color name="network_active">#8bc34a</color>
+    <color name="network_active_deprecated">#ff9800</color>
+    <color name="network_deprecated">#ffeb3b</color>
+    <color name="my_background_material_light">#fafafa</color>
 </resources>

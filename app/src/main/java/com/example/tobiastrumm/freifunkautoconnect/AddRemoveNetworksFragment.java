@@ -192,8 +192,12 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
     public void onResume() {
         super.onResume();
         registerBroadcastReceivers();
-        // Check which Networks are already saved in the network configuration
-        networkRecyclerAdapter.updateNetworkStatus();
+        // Necessary because the network configuration or the "show deprecated SSIDs" setting might be changed in the meantime.
+        try{
+            networkRecyclerAdapter.updateSSIDsFromJsonFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         // The service could have finished while no Broadcast Receiver was registered that could have received the signal to set showProgress to false;
         if(showProgress && (isAddAllNetworkServiceRunning() || isRemoveAllNetworkServiceRunning())){
@@ -213,8 +217,12 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
 
     @Override
     public void onResumeFragment() {
-        // Check which Networks are already saved in the network configuration
-        networkRecyclerAdapter.updateNetworkStatus();
+        // Necessary because the network configuration or the "show deprecated SSIDs" setting might be changed in the meantime.
+        try{
+            networkRecyclerAdapter.updateSSIDsFromJsonFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -303,13 +311,13 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getActivity());
 
         IntentFilter addAllIntentFilter = new IntentFilter(AddAllNetworksService.BROADCAST_ACTION);
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(addAllNetworksResponseReceiver, addAllIntentFilter);
+        lbm.registerReceiver(addAllNetworksResponseReceiver, addAllIntentFilter);
 
         IntentFilter removeAllIntentFilter = new IntentFilter(RemoveAllNetworksService.BROADCAST_ACTION);
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(removeAllNetworksResponseReceiver, removeAllIntentFilter);
+        lbm.registerReceiver(removeAllNetworksResponseReceiver, removeAllIntentFilter);
 
         IntentFilter downloadSsidJsonIntentFilter = new IntentFilter(DownloadSsidJsonService.BROADCAST_ACTION);
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(downloadSsidJsonResponseReceiver, downloadSsidJsonIntentFilter);
+        lbm.registerReceiver(downloadSsidJsonResponseReceiver, downloadSsidJsonIntentFilter);
     }
 
     private void unregisterBroadcastReceivers(){
@@ -381,12 +389,12 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
         /**
          * Should open a dialog to confirm that all shown networks should be added to the network configuration.
          */
-        public void showDialogAddAllNetworks();
+        void showDialogAddAllNetworks();
 
         /**
          * Should open a dialog to confirm that all shown networks should be removed from the network configuration.
          */
-        public void showDialogRemoveAllNetworks();
+        void showDialogRemoveAllNetworks();
     }
 
 }
