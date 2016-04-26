@@ -320,6 +320,8 @@ public class NearestNodesFragment extends Fragment implements NodeRecyclerAdapte
         switch(requestCode){
             case PERMISSION_REQUEST_FINE_LOCATION:
                 if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    // Activate the progress bar again. (In some cases the progress bar was not shown after the permission dialog was closed.
+                    showProgressBar();
                     // The permission was granted. Start FineNearestNodesService
                     Intent intent = new Intent(getActivity(), FindNearestNodesService.class);
                     getActivity().startService(intent);
