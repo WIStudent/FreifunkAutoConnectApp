@@ -17,6 +17,6 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="false"
         android:textSize="@dimen/abc_text_size_subhead_material"
-        android:textColor="@color/abc_primary_text_material_light"/>
+        android:textColor="@color/abc_primary_text_material_light" />
 
 </RelativeLayout>

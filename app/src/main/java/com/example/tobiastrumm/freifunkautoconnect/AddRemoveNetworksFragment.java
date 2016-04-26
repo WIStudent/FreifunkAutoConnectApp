@@ -8,11 +8,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,30 +20,15 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 
 /**
  * A simple {@link Fragment} subclass.
@@ -53,19 +38,15 @@ import java.util.List;
  * Use the {@link AddRemoveNetworksFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AddRemoveNetworksFragment extends Fragment implements AdapterView.OnItemClickListener, FragmentLifecycle{
+public class AddRemoveNetworksFragment extends Fragment implements FragmentLifecycle{
 
     private static final String TAG = AddRemoveNetworksFragment.class.getSimpleName();
 
     private OnFragmentInteractionListener mListener;
 
-    // ListView stuff
-    private ArrayList<Network> allNetworks;
-    private ArrayList<Network> shownNetworks;
-
     // Network
-    private NetworkAdapter na;
-    private WifiManager wm;
+    private NetworkRecyclerAdapter networkRecyclerAdapter;
+
 
     // SearchView
     private SearchView searchView;
@@ -86,7 +67,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         public void onReceive(Context context, Intent intent) {
             switch(intent.getStringExtra(AddAllNetworksService.STATUS_TYPE)){
                 case AddAllNetworksService.STATUS_TYPE_FINISHED:
-                    checkActiveNetworks();
+                    networkRecyclerAdapter.updateNetworkStatus();
                     hideProgressBar();
                     break;
                 case RemoveAllNetworksService.STATUS_TYPE_PROGRESS:
@@ -104,7 +85,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         public void onReceive(Context context, Intent intent){
             switch(intent.getStringExtra(RemoveAllNetworksService.STATUS_TYPE)){
                 case RemoveAllNetworksService.STATUS_TYPE_FINISHED:
-                    checkActiveNetworks();
+                    networkRecyclerAdapter.updateNetworkStatus();
                     hideProgressBar();
                     break;
                 case RemoveAllNetworksService.STATUS_TYPE_PROGRESS:
@@ -124,10 +105,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
                 case DownloadSsidJsonService.STATUS_TYPE_REPLACED:
                     try {
                         // Read ssid from file again.
-                        getSSIDs();
-                        checkActiveNetworks();
-                        // caling na.notifyAllNetworksHasChangedReapplyFilter isn't necessary here because it was already called at the end of
-                        // checkActiveNetworks
+                        networkRecyclerAdapter.updateSSIDsFromJsonFile();
                         Log.d(TAG, "SSIDs were refreshed");
 
                         // Notify user that a new SSID list was downloaded.
@@ -167,15 +145,8 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
 
         setupBroadcastReceivers();
 
-        allNetworks = new ArrayList<>();
-        try{
-            getSSIDs();
-        }
-        catch(IOException e){
-            // Could not read SSIDs from csv file.
-        }
-        shownNetworks = new ArrayList<>(allNetworks);
-        wm = (WifiManager) getActivity().getSystemService(Context.WIFI_SERVICE);
+        // Setup NodeRecyclerAdapter
+        networkRecyclerAdapter = new NetworkRecyclerAdapter(getActivity());
     }
 
     @Override
@@ -189,11 +160,10 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         tv_progress = (TextView) view.findViewById(R.id.tv_progresbar);
         relativeLayout = (RelativeLayout) view.findViewById(R.id.rl_add_remove_networks);
 
-        ListView lv = (ListView) view.findViewById(R.id.lv_networks);
-        lv.setOnItemClickListener(this);
-
-        na = new NetworkAdapter(getActivity(), allNetworks, shownNetworks);
-        lv.setAdapter(na);
+        // Setup RecyclerView
+        RecyclerView rv = (RecyclerView) view.findViewById(R.id.rv_networks);
+        rv.setAdapter(networkRecyclerAdapter);
+        rv.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         // Set OnClickListeners for the buttons
         view.findViewById(R.id.btn_add_all).setOnClickListener(new View.OnClickListener() {
@@ -223,7 +193,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         super.onResume();
         registerBroadcastReceivers();
         // Check which Networks are already saved in the network configuration
-        checkActiveNetworks();
+        networkRecyclerAdapter.updateNetworkStatus();
 
         // The service could have finished while no Broadcast Receiver was registered that could have received the signal to set showProgress to false;
         if(showProgress && (isAddAllNetworkServiceRunning() || isRemoveAllNetworkServiceRunning())){
@@ -244,7 +214,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
     @Override
     public void onResumeFragment() {
         // Check which Networks are already saved in the network configuration
-        checkActiveNetworks();
+        networkRecyclerAdapter.updateNetworkStatus();
     }
 
     @Override
@@ -263,7 +233,7 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                na.getFilter().filter(newText);
+                networkRecyclerAdapter.getFilter().filter(newText);
                 return true;
             }
         });
@@ -321,97 +291,6 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
         tv_progress.setText(value + "/" + progress_max_value);
     }
 
-    private void getSSIDs() throws IOException {
-        // Check if ssids.json exists in internal storage.
-        File ssidsJson = getActivity().getFileStreamPath("ssids.json");
-        if(!ssidsJson.exists()){
-            Log.d(TAG, "Copy ssids.json to internal storage.");
-            // If not, copy ssids.json from assets to internal storage.
-            FileOutputStream outputStream = getActivity().openFileOutput("ssids.json", Context.MODE_PRIVATE);
-            InputStream inputStream = getActivity().getAssets().open("ssids.json");
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while((bytesRead = inputStream.read(buffer)) != -1){
-                outputStream.write(buffer, 0, bytesRead);
-            }
-            inputStream.close();
-            outputStream.close();
-            Log.d(TAG, "Finished copying ssids.json to internal storage");
-        }
-
-        // Read ssids.json from internal storage.
-        String jsonString = "";
-        InputStreamReader is = new InputStreamReader(new FileInputStream(ssidsJson));
-        BufferedReader reader = new BufferedReader(is);
-        String line;
-        while ((line = reader.readLine()) != null) {
-            jsonString += line;
-        }
-        reader.close();
-
-        // Read SSIDs from JSON file
-        allNetworks.clear();
-        try {
-            JSONObject json = new JSONObject(jsonString);
-            JSONArray ssidsJsonArray = json.getJSONArray("ssids");
-            for(int i = 0; i<ssidsJsonArray.length(); i++){
-                allNetworks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
-            }
-
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        Collections.sort(allNetworks);
-    }
-
-    private void checkActiveNetworks(){
-        // Check which Network is already added to the network configuration
-        List<WifiConfiguration> wifiConf = wm.getConfiguredNetworks();
-        if (wifiConf != null) {
-            Collections.sort(wifiConf, new WifiConfigurationComparator());
-            for (Network n : allNetworks) {
-                // Search for the current network in the network configuration. If it is found (index will be >= 0), set active to true
-                int index = Collections.binarySearch(wifiConf, n.ssid, new WifiConfigurationSSIDComparator());
-                n.active = index >= 0;
-            }
-            na.notifyAllNetworksHasChangedReapplyFilter();
-        }
-
-    }
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        // Get the Network object that was clicked. Must be looked up in shownNetworks because it contains
-        // all Networks, that are currently shown in the ListView.
-        Network n = shownNetworks.get(position);
-        // If the network is already saved in the network configuration, remove it
-        if(n.active){
-            n.active = false;
-            List<WifiConfiguration> wificonf = wm.getConfiguredNetworks();
-            if(wificonf != null) {
-                for (WifiConfiguration wc : wificonf) {
-                    if (wc.SSID.equals(n.ssid)) {
-                        wm.removeNetwork(wc.networkId);
-                    }
-                }
-            }
-        }
-        // If the network is not in the network configuration, add it.
-        else{
-            n.active = true;
-            // Add Network to network configuration
-            WifiConfiguration wc = new WifiConfiguration();
-            wc.SSID = n.ssid;
-            wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-            int networkId = wm.addNetwork(wc);
-            wm.enableNetwork(networkId, false);
-        }
-        // Save configuration
-        wm.saveConfiguration();
-        // Notify the NetworkAdapter that the content of ArrayList allNetworks was changed.
-        na.notifyDataSetChanged();
-    }
 
     private void setupBroadcastReceivers(){
         addAllNetworksResponseReceiver = new AddAllNetworksResponseReceiver();
@@ -445,25 +324,25 @@ public class AddRemoveNetworksFragment extends Fragment implements AdapterView.O
     public void addAllNetworks(){
         // Add only currently shown networks
         // Tell Activity to show a ProgressDialog
-        int progressBarMax = shownNetworks.size();
+        int progressBarMax = networkRecyclerAdapter.getItemCount();
         showProgressBar(progressBarMax);
         updateProgressBar(0);
 
         //Start AddAllNetworksService
         Intent intent = new Intent(getActivity(), AddAllNetworksService.class);
-        intent.putParcelableArrayListExtra(AddAllNetworksService.INPUT_NETWORKS, shownNetworks);
+        intent.putParcelableArrayListExtra(AddAllNetworksService.INPUT_NETWORKS, new ArrayList<>(networkRecyclerAdapter.getShownNetworks()));
         getActivity().startService(intent);
     }
 
     public void removeAllNetworks(){
         // Tell Activity to show a ProgressDialog
-        int progressBarMax = shownNetworks.size();
+        int progressBarMax = networkRecyclerAdapter.getItemCount();
         showProgressBar(progressBarMax);
         updateProgressBar(0);
 
         //Start RemoveAllNetworksService
         Intent intent = new Intent(getActivity(), RemoveAllNetworksService.class);
-        intent.putParcelableArrayListExtra(RemoveAllNetworksService.INPUT_NETWORKS, shownNetworks);
+        intent.putParcelableArrayListExtra(RemoveAllNetworksService.INPUT_NETWORKS, new ArrayList<>(networkRecyclerAdapter.getShownNetworks()));
         getActivity().startService(intent);
     }
 
