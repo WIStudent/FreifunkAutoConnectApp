@@ -38,7 +38,7 @@ import java.util.ArrayList;
  * Use the {@link AddRemoveNetworksFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class AddRemoveNetworksFragment extends Fragment implements FragmentLifecycle{
+public class AddRemoveNetworksFragment extends Fragment implements FragmentLifecycle, NetworkRecyclerAdapter.OnAdapterInteractionListener{
 
     private static final String TAG = AddRemoveNetworksFragment.class.getSimpleName();
 
@@ -59,6 +59,11 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
     private TextView tv_progress;
     private boolean showProgress;
     private int progress_max_value;
+
+    @Override
+    public void onRemoveSsidFailed() {
+        mListener.showDialogSSIDRemovalFailed();
+    }
 
     private class AddAllNetworksResponseReceiver extends BroadcastReceiver{
         private AddAllNetworksResponseReceiver(){}
@@ -147,6 +152,7 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
 
         // Setup NodeRecyclerAdapter
         networkRecyclerAdapter = new NetworkRecyclerAdapter(getActivity());
+        networkRecyclerAdapter.setOnAdapterInteractionListener(this);
     }
 
     @Override
@@ -395,6 +401,11 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
          * Should open a dialog to confirm that all shown networks should be removed from the network configuration.
          */
         void showDialogRemoveAllNetworks();
+
+        /**
+         * Should open a dialog that informs the user that the SSID he tried to remove could not be removed.
+         */
+        void showDialogSSIDRemovalFailed();
     }
 
 }

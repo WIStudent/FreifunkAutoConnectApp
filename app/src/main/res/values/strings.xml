@@ -51,4 +51,7 @@
     <string name="info_ssid_added">SSID added</string>
     <string name="info_ssid_added_outdated">SSID added, but outdated</string>
     <string name="info_ssid_outdated">SSID is outdated</string>
+    <string name="dialog_removal_failed_title">Removal failed</string>
+    <string name="dialog_removal_failed_message">The selected SSID could not be removed. A possible reason could be that the SSID was not added by this app. Please try to remove it in the wifi settings manually.</string>
+    <string name="ok">Ok</string>
 </resources>

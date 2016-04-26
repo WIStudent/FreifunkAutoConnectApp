@@ -64,6 +64,12 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
                             if (wc.SSID.equals(n.ssid)) {
                                 // Only set active to false if the removal was successful
                                 n.active = !wifiManager.removeNetwork(wc.networkId);
+
+                                // If the network is still active, inform the object registered as
+                                // onAdapterInteractionListener that the removal failed.
+                                if(n.active && onAdapterInteractionListener != null){
+                                    onAdapterInteractionListener.onRemoveSsidFailed();
+                                }
                             }
                         }
                     }
@@ -336,5 +342,21 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
 
         // update filteredNetworks (and with it the RecycleView) by filtering with the last used constaint
         getFilter().filter(constraint);
+    }
+
+
+    /***************************
+     * This listener is used to report back problems with removing networks to the element containing the
+     * NetworkRecyclerAdapter.
+     ***************************/
+
+    public interface OnAdapterInteractionListener {
+        void onRemoveSsidFailed();
+    }
+
+    private OnAdapterInteractionListener onAdapterInteractionListener = null;
+
+    public void setOnAdapterInteractionListener(OnAdapterInteractionListener listener){
+        onAdapterInteractionListener = listener;
     }
 }
