@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -20,6 +21,8 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
     private static String TAG = MainActivity.class.getSimpleName();
 
     private MyFragmentPagerAdapter myFragmentPagerAdapter;
+
+    private AppBarLayout appBarLayout;
 
 
     private void checkForNewSsidFile(){
@@ -47,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
         // https://stackoverflow.com/questions/29055491/android-toolbar-for-api-19-for-api-21-works-ok
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        appBarLayout = (AppBarLayout)findViewById(R.id.appbar);
 
         // Setup Tabs and Fragments
         String titles[] =  {getString(R.string.nearest_freifunk), getString(R.string.ssids)};
@@ -117,6 +122,10 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
 
             @Override
             public void onPageScrollStateChanged(int state) {
+                if(state == ViewPager.SCROLL_STATE_DRAGGING){
+                    // Expand Toolbar if the tab was switched.
+                    appBarLayout.setExpanded(true, true);
+                }
             }
         });
 

@@ -2,22 +2,18 @@
 xmlns:android="http://schemas.android.com/apk/res/android"
 xmlns:app="http://schemas.android.com/apk/res-auto"
 android:layout_width="match_parent"
-android:layout_height="match_parent">
+android:layout_height="match_parent"
+app:layout_anchorGravity="bottom">
 
-    <android.support.v4.widget.NestedScrollView
+
+    <!-- Your scrolling content -->
+    <android.support.v4.view.ViewPager
+        android:id="@+id/viewpager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-        <!-- Your scrolling content -->
-        <android.support.v4.view.ViewPager
-            android:id="@+id/viewpager"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@android:color/white"/>
-
-    </android.support.v4.widget.NestedScrollView>
+        android:background="@android:color/white"
+        android:fillViewport="false"
+        app:layout_behavior="com.example.tobiastrumm.freifunkautoconnect.FixScrollingFooterBehavior" />
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appbar"
@@ -33,7 +29,6 @@ android:layout_height="match_parent">
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             style="@style/MyCustomTabLayout"
-            app:layout_scrollFlags="scroll|enterAlways"
             android:layout_below="@id/toolbar"/>
 
     </android.support.design.widget.AppBarLayout>
