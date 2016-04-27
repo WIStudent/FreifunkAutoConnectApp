@@ -46,4 +46,12 @@
     <string name="location_warning_text">Your location could not be determined. Make sure that GPS is enabled and airplane mode is disabled. If you are using Android 6.0 or newer, make sure that the permission to access location was granted.</string>
     <string name="Retry">Retry</string>
     <string name="permission_settings">Open App Settings</string>
+    <string name="pref_show_deprecated">Show outdated SSIDs</string>
+    <string name="info_colors">Colors</string>
+    <string name="info_ssid_added">SSID added</string>
+    <string name="info_ssid_added_outdated">SSID added, but outdated</string>
+    <string name="info_ssid_outdated">SSID is outdated</string>
+    <string name="dialog_removal_failed_title">Removal failed</string>
+    <string name="dialog_removal_failed_message">The selected SSID could not be removed. A possible reason could be that the SSID was not added by this app. Please try to remove it in the wifi settings manually.</string>
+    <string name="ok">Ok</string>
 </resources>

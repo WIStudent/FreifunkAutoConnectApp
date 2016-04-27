@@ -1,9 +1,10 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
 import android.content.Context;
-import android.graphics.Color;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -26,6 +27,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecyclerAdapter.ViewHolder> {
@@ -62,6 +64,12 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
                             if (wc.SSID.equals(n.ssid)) {
                                 // Only set active to false if the removal was successful
                                 n.active = !wifiManager.removeNetwork(wc.networkId);
+
+                                // If the network is still active, inform the object registered as
+                                // onAdapterInteractionListener that the removal failed.
+                                if(n.active && onAdapterInteractionListener != null){
+                                    onAdapterInteractionListener.onRemoveSsidFailed();
+                                }
                             }
                         }
                     }
@@ -78,8 +86,22 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
                 }
                 // Save configuration
                 wifiManager.saveConfiguration();
-                // Notify the networkRecyclerAdapter that the item at adapterPosition was changed.
-                notifyItemChanged(adapterPosition);
+
+
+                /*****  Notify the networkRecyclerAdapter that the item at adapterPosition was changed. *****/
+                SharedPreferences prefMan = PreferenceManager.getDefaultSharedPreferences(context);
+                boolean show_deprecated = prefMan.getBoolean("pref_deprecated_ssids", false);
+                // If a deprecated network was removed and depricated networks should not be shown, remove the network
+                // from the RecyclerView completely.
+                if(!show_deprecated && !n.active && n.deprecated){
+                    filteredNetworks.remove(adapterPosition);
+                    allNetworks.remove(n);
+                    notifyItemRemoved(adapterPosition);
+                }
+                else{
+                    notifyItemChanged(adapterPosition);
+                }
+
             }
         }
     }
@@ -172,10 +194,21 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
         //Populate the data into the template view
         holder.tv_ssid.setText(network.ssid);
         if(network.active){
-            holder.itemView.setBackgroundColor(Color.parseColor("#8bc34a"));
+            if(network.deprecated){
+                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.network_active_deprecated));
+            }
+            else {
+                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.network_active));
+            }
         }
         else{
-            holder.itemView.setBackgroundColor(ContextCompat.getColor(context, android.support.v7.appcompat.R.color.background_material_light));
+            if(network.deprecated){
+                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.network_deprecated));
+            }
+            else{
+                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.my_background_material_light));
+            }
+
         }
     }
 
@@ -258,6 +291,16 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
                 allNetworks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
             }
 
+            // Read the deprecated ssids
+            JSONArray deprecatedJsonArray = json.optJSONArray("deprecated");
+            if(deprecatedJsonArray != null){
+                for(int i = 0; i<deprecatedJsonArray.length(); i++){
+                    Network n = new Network('"' + deprecatedJsonArray.getString(i) + '"');
+                    n.deprecated = true;
+                    allNetworks.add(n);
+                }
+            }
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -283,7 +326,37 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
                 n.active = index >= 0;
             }
         }
+
+        // if deprecated ssids should not be shown, remove all networks from the list that are deprecated and not included in the
+        // network configuration.
+        SharedPreferences prefMan = PreferenceManager.getDefaultSharedPreferences(context);
+        boolean show_deprecated = prefMan.getBoolean("pref_deprecated_ssids", false);
+        if(!show_deprecated){
+            for(Iterator<Network> it = allNetworks.iterator(); it.hasNext();) {
+                Network n = it.next();
+                if( n.deprecated && !n.active){
+                    it.remove();
+                }
+            }
+        }
+
         // update filteredNetworks (and with it the RecycleView) by filtering with the last used constaint
         getFilter().filter(constraint);
+    }
+
+
+    /***************************
+     * This listener is used to report back problems with removing networks to the element containing the
+     * NetworkRecyclerAdapter.
+     ***************************/
+
+    public interface OnAdapterInteractionListener {
+        void onRemoveSsidFailed();
+    }
+
+    private OnAdapterInteractionListener onAdapterInteractionListener = null;
+
+    public void setOnAdapterInteractionListener(OnAdapterInteractionListener listener){
+        onAdapterInteractionListener = listener;
     }
 }

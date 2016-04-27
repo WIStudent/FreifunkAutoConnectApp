@@ -33,4 +33,11 @@
     <string name="location_warning_text">Position konnte nicht bestimmt werden. Stelle sicher, dass GPS aktiviert und der Flugmodus deaktiviert ist. Falls du Android 6.0 oder neuer nutzt, stelle sicher, dass die Berechtigung zum Ermitteln des Standortes erteilt wurde.</string>
     <string name="Retry">Erneut versuchen</string>
     <string name="permission_settings">Öffne App-Einstellungen</string>
+    <string name="pref_show_deprecated">Zeige veraltete SSIDs an</string>
+    <string name="info_colors">Farben</string>
+    <string name="info_ssid_added">SSID hinzugefügt</string>
+    <string name="info_ssid_added_outdated">SSID hinzugefügt, aber veraltet</string>
+    <string name="info_ssid_outdated">SSID ist veraltet</string>
+    <string name="dialog_removal_failed_title">Entfernen fehlgeschlagen</string>
+    <string name="dialog_removal_failed_message">Die ausgewählte SSID konnte nicht entfernt werden. Ein Grund dafür könnte sein, dass die SSID nicht mit Hilfe dieser App hinzugefügt wurde. Bitte versuche, die SSID manuell über die WLAN-Einstellungen zu entfernen.</string>
 </resources>

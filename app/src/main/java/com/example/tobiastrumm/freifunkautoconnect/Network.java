@@ -3,13 +3,11 @@ package com.example.tobiastrumm.freifunkautoconnect;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-/**
- * Created by Tobias on 06.05.2015.
- */
 public class Network implements Comparable<Network>, Parcelable{
 
     String ssid = "";
     boolean active = false;
+    boolean deprecated = false;
 
     public Network(String ssid){
         this.ssid = ssid;
@@ -47,7 +45,7 @@ public class Network implements Comparable<Network>, Parcelable{
     @Override
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(ssid);
-        boolean[] booleanArray = {active};
+        boolean[] booleanArray = {active, deprecated};
         parcel.writeBooleanArray(booleanArray);
     }
 
@@ -57,9 +55,10 @@ public class Network implements Comparable<Network>, Parcelable{
                 @Override
                 public Network createFromParcel(Parcel parcel) {
                     Network n = new Network(parcel.readString());
-                    boolean[] booleanArray = new boolean[1];
+                    boolean[] booleanArray = new boolean[2];
                     parcel.readBooleanArray(booleanArray);
                     n.active = booleanArray[0];
+                    n.deprecated = booleanArray[1];
                     return n;
                 }
 
