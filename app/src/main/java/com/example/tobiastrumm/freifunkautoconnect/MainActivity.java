@@ -1,12 +1,15 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -14,6 +17,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewTreeObserver;
 
 
 public class MainActivity extends AppCompatActivity implements AddRemoveNetworksFragment.OnFragmentInteractionListener, RemoveAllDialogFragment.OnRemoveAllListener, AddAllDialogFragment.OnAddAllListener, NearestNodesFragment.OnFragmentInteractionListener{
@@ -23,6 +27,7 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
     private MyFragmentPagerAdapter myFragmentPagerAdapter;
 
     private AppBarLayout appBarLayout;
+    private ViewPager viewPager;
 
 
     private void checkForNewSsidFile(){
@@ -57,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
         String titles[] =  {getString(R.string.nearest_freifunk), getString(R.string.ssids)};
         myFragmentPagerAdapter = new MyFragmentPagerAdapter(getFragmentManager(), titles);
 
-        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+        viewPager = (ViewPager) findViewById(R.id.viewpager);
         viewPager.setAdapter(myFragmentPagerAdapter);
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
 
@@ -144,6 +149,48 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
 
         checkForNewSsidFile();
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // The toolbar should always be expanded when the activity is started.
+        appBarLayout.setExpanded(true, false);
+
+
+        /********************************
+         * Without this code the footer on the AddRemoveNetworksFragment would not be shown when the activity is restarted
+         * after the the toolbar was collapsed. A new ViewTreeObserver.OnGlobalLayoutListener is added that set changes the
+         * padding of the ViewPager as soon as the layout is ready to be changed. The Listener then removes itself to prevent
+         * further calls.
+         ********************************/
+        final CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorlayout);
+        coordinatorLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @SuppressLint("NewApi")
+            @SuppressWarnings("deprecation")
+            @Override
+            public void onGlobalLayout() {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+                    coordinatorLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                }
+                else {
+                    coordinatorLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                }
+
+                int bottomPadding = appBarLayout.getTotalScrollRange() + appBarLayout.getTop();
+                boolean paddingChanged = bottomPadding != viewPager.getPaddingBottom();
+                if (paddingChanged) {
+                    viewPager.setPadding(
+                            viewPager.getPaddingLeft(),
+                            viewPager.getPaddingTop(),
+                            viewPager.getPaddingRight(),
+                            bottomPadding);
+                            viewPager.requestLayout();
+                }
+            }
+        });
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
