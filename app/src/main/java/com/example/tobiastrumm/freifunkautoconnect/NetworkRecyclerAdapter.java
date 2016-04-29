@@ -2,6 +2,7 @@ package com.example.tobiastrumm.freifunkautoconnect;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.preference.PreferenceManager;
@@ -206,7 +207,7 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
                 holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.network_deprecated));
             }
             else{
-                holder.itemView.setBackgroundColor(ContextCompat.getColor(context, R.color.my_background_material_light));
+                holder.itemView.setBackgroundColor(Color.WHITE);
             }
 
         }

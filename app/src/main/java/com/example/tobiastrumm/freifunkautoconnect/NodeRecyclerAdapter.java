@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapter.ViewHolder> {
 
-    public static class ViewHolder extends RecyclerView.ViewHolder{
+    public class ViewHolder extends RecyclerView.ViewHolder{
 
         public TextView tv_name;
         public TextView tv_status;
@@ -53,7 +53,7 @@ public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapte
         void onItemClick(View itemView, int layoutPosition, int adapterPosition);
     }
     // Listener member variable
-    private static OnItemClickListener listener;
+    private OnItemClickListener listener;
 
     // Define the method that allows the parent fragment to define the listener
     public void setOnItemClickListener(OnItemClickListener listener){
@@ -99,8 +99,7 @@ public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapte
         View nodeView = inflater.inflate(R.layout.node_item, parent, false);
 
         // return a new holder instance
-        ViewHolder viewHolder = new ViewHolder(nodeView);
-        return viewHolder;
+        return new ViewHolder(nodeView);
     }
 
     @Override
@@ -116,7 +115,7 @@ public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapte
 
         if(node.online){
             holder.tv_status.setText(context.getString(R.string.online));
-            holder.tv_status.setTextColor(ContextCompat.getColor(context, R.color.abc_secondary_text_material_light));
+            holder.tv_status.setTextColor(ContextCompat.getColor(context, R.color.node_status_online));
         }
         else{
             holder.tv_status.setText(context.getString(R.string.offline));

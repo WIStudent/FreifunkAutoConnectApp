@@ -9,14 +9,13 @@
     android:gravity="center_vertical">
 
     <TextView
+        style="@style/NetworkItemTextPrimary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/placeholder"
         android:id="@+id/tv_network_item_ssid"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="false"
-        android:textSize="@dimen/abc_text_size_subhead_material"
-        android:textColor="@color/abc_primary_text_material_light" />
+        android:layout_alignParentStart="false"/>
 
 </RelativeLayout>

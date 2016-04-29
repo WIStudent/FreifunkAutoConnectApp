@@ -8,6 +8,7 @@
     android:background="?android:attr/selectableItemBackground">
 
     <TextView
+        style="@style/NodeItemTextPrimary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/placeholder"
@@ -15,13 +16,12 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:textSize="@dimen/abc_text_size_subhead_material"
         android:layout_toLeftOf="@+id/tv_node_item_distance"
         android:layout_toStartOf="@+id/tv_node_item_distance"
-        android:paddingTop="10dp"
-        android:textColor="@color/abc_primary_text_material_light"/>
+        android:paddingTop="10dp"/>
 
     <TextView
+        style="@style/NodeItemTextSecondary"
         android:id="@+id/tv_node_item_status_pre"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -29,11 +29,10 @@
         android:layout_below="@+id/tv_node_item_name"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:textSize="@dimen/abc_text_size_body_1_material"
-        android:paddingBottom="10dp"
-        android:textColor="@color/abc_secondary_text_material_light"/>
+        android:paddingBottom="10dp"/>
 
     <TextView
+        style="@style/NodeItemTextSecondary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/placeholder"
@@ -41,11 +40,10 @@
         android:layout_below="@+id/tv_node_item_name"
         android:layout_toRightOf="@+id/tv_node_item_status_pre"
         android:layout_toEndOf="@+id/tv_node_item_status_pre"
-        android:textSize="@dimen/abc_text_size_body_1_material"
-        android:paddingBottom="10dp"
-        android:textColor="@color/abc_secondary_text_material_light"/>
+        android:paddingBottom="10dp" />
 
     <TextView
+        style="@style/NodeItemTextPrimary"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:minEms="4"
@@ -54,8 +52,6 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:textSize="@dimen/abc_text_size_subhead_material"
         android:paddingTop="10dp"
-        android:textColor="@color/abc_primary_text_material_light"
-        android:gravity="right"/>
+        android:gravity="end"/>
 </RelativeLayout>
