@@ -152,11 +152,26 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
         setRetainInstance(true);
         setHasOptionsMenu(true);
 
+
         setupBroadcastReceivers();
+
+        // Register downloadSsidJsonResponseReceiver to get notified if the ssid file is changed.
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getActivity());
+        IntentFilter downloadSsidJsonIntentFilter = new IntentFilter(DownloadSsidJsonService.BROADCAST_ACTION);
+        lbm.registerReceiver(downloadSsidJsonResponseReceiver, downloadSsidJsonIntentFilter);
 
         // Setup NodeRecyclerAdapter
         networkRecyclerAdapter = new NetworkRecyclerAdapter(getActivity());
         networkRecyclerAdapter.setOnAdapterInteractionListener(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        // unregister the downloadSsidJsonResponseRecceiver
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getActivity());
+        lbm.unregisterReceiver(downloadSsidJsonResponseReceiver);
     }
 
     @Override
@@ -325,16 +340,12 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
 
         IntentFilter removeAllIntentFilter = new IntentFilter(RemoveAllNetworksService.BROADCAST_ACTION);
         lbm.registerReceiver(removeAllNetworksResponseReceiver, removeAllIntentFilter);
-
-        IntentFilter downloadSsidJsonIntentFilter = new IntentFilter(DownloadSsidJsonService.BROADCAST_ACTION);
-        lbm.registerReceiver(downloadSsidJsonResponseReceiver, downloadSsidJsonIntentFilter);
     }
 
     private void unregisterBroadcastReceivers(){
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getActivity());
         lbm.unregisterReceiver(addAllNetworksResponseReceiver);
         lbm.unregisterReceiver(removeAllNetworksResponseReceiver);
-        lbm.unregisterReceiver(downloadSsidJsonResponseReceiver);
     }
 
 

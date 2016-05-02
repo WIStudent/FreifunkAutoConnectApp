@@ -37,11 +37,11 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
 
         Log.d(TAG, "Current timestamp: " + currentTime + " last check timestamp: " + lastCheck);
 
-        if(currentTime - lastCheck > 24*60*60){
+        //if(currentTime - lastCheck > 24*60*60){
             // Start DownloadSsidJsonService to check if a newer ssids.json file is available.
             Intent intent = new Intent(this, DownloadSsidJsonService.class);
             startService(intent);
-        }
+       // }
     }
 
 
