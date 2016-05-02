@@ -91,7 +91,11 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
             switch(intent.getStringExtra(RemoveAllNetworksService.STATUS_TYPE)){
                 case RemoveAllNetworksService.STATUS_TYPE_FINISHED:
                     networkRecyclerAdapter.updateNetworkStatus();
+                    int failed_removals = intent.getIntExtra(RemoveAllNetworksService.STATUS_FAILED_REMOVALS, 0);
                     hideProgressBar();
+                    if(failed_removals != 0){
+                        mListener.showDialogRemoveAllRemovalFailed(failed_removals);
+                    }
                     break;
                 case RemoveAllNetworksService.STATUS_TYPE_PROGRESS:
                     int progressBarProgress = intent.getIntExtra(AddAllNetworksService.STATUS_PROGRESS, 0);
@@ -406,6 +410,12 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
          * Should open a dialog that informs the user that the SSID he tried to remove could not be removed.
          */
         void showDialogSSIDRemovalFailed();
+
+        /**
+         * Should open a dialog that informs the user about the number of SSIDs that could not be removed.
+         * @param number_failed_removal Number of SSIDs that could could not be removed.
+         */
+        void showDialogRemoveAllRemovalFailed(int number_failed_removal);
     }
 
 }

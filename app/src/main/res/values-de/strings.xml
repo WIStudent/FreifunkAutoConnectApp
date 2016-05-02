@@ -40,4 +40,7 @@
     <string name="info_ssid_outdated">SSID ist veraltet</string>
     <string name="dialog_removal_failed_title">Entfernen fehlgeschlagen</string>
     <string name="dialog_removal_failed_message">Die ausgewählte SSID konnte nicht entfernt werden. Ein Grund dafür könnte sein, dass die SSID nicht mit Hilfe dieser App hinzugefügt wurde. Bitte versuche, die SSID manuell über die WLAN-Einstellungen zu entfernen.</string>
+    <string name="dialog_remove_all_removal_failed_title">Entfernen fehlgeschlagen</string>
+    <string name="dialog_remove_all_removal_failed_message_singular">Eine SSID konnte nicht entfernt werden. Ein Grund dafür könnte sein, dass die SSID nicht mit Hilfe dieser App hinzugefügt wurde. Bitte versuche, die SSID manuell über die WLAN-Einstellungen zu entfernen.</string>
+    <string name="dialog_remove_all_removal_failed_message_plural">%1$d SSIDs konnten nicht entfernt werden. Ein Grund dafür könnte sein, dass die SSIDs nicht mit Hilfe dieser App hinzugefügt wurden. Bitte versuche, die SSIDs manuell über die WLAN-Einstellungen zu entfernen.</string>
 </resources>

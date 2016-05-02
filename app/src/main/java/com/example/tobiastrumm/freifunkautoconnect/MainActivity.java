@@ -260,4 +260,13 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
         RemovalFailedDialogFragment df = new RemovalFailedDialogFragment();
         df.show(this.getFragmentManager(), "");
     }
+
+    @Override
+    public void showDialogRemoveAllRemovalFailed(int number_failed_removal) {
+        RemoveAllRemovalFailedDialogFragment df = new RemoveAllRemovalFailedDialogFragment();
+        Bundle arguments = new Bundle();
+        arguments.putInt(RemoveAllRemovalFailedDialogFragment.ARGUMENT_NUMBER_FAILED_REMOVAL, number_failed_removal);
+        df.setArguments(arguments);
+        df.show(this.getFragmentManager(), "");
+    }
 }

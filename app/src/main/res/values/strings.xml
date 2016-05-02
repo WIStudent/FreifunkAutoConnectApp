@@ -54,4 +54,7 @@
     <string name="dialog_removal_failed_title">Removal failed</string>
     <string name="dialog_removal_failed_message">The selected SSID could not be removed. A possible reason could be that the SSID was not added by this app. Please try to remove it in the wifi settings manually.</string>
     <string name="ok">Ok</string>
+    <string name="dialog_remove_all_removal_failed_title">Removal failed</string>
+    <string name="dialog_remove_all_removal_failed_message_singular">1 SSID could not be removed. A possible reason could be that the SSID was not added by this app. Please try to remove it in the wifi settings manually.</string>
+    <string name="dialog_remove_all_removal_failed_message_plural">%1$d SSIDs could not be removed. A possible reason could be that the SSIDs were not added by this app. Please try to remove them in the wifi settings manually.</string>
 </resources>

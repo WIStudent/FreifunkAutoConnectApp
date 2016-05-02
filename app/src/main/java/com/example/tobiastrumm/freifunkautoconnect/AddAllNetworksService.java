@@ -9,9 +9,6 @@ import android.support.v4.content.LocalBroadcastManager;
 
 import java.util.ArrayList;
 
-/**
- * Created by tobia_000 on 27.07.2015.
- */
 public class AddAllNetworksService extends IntentService {
 
     public static final String INPUT_NETWORKS = "input_networks";
