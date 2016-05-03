@@ -3,7 +3,6 @@ package com.example.tobiastrumm.freifunkautoconnect;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +15,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.percent.PercentRelativeLayout;
 import android.support.v13.app.FragmentCompat;
+import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -306,9 +306,7 @@ public class NearestNodesFragment extends Fragment implements NodeRecyclerAdapte
         }
         else{
             // Request permission
-            FragmentCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                    PERMISSION_REQUEST_FINE_LOCATION);
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_FINE_LOCATION);
         }
 
 
@@ -355,12 +353,12 @@ public class NearestNodesFragment extends Fragment implements NodeRecyclerAdapte
 
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
+    public void onAttach(Context context) {
+        super.onAttach(context);
         try {
-            mListener = (OnFragmentInteractionListener) activity;
+            mListener = (OnFragmentInteractionListener) context;
         } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
+            throw new ClassCastException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
     }

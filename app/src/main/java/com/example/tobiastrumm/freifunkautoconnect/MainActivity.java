@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
 
         // Setup Tabs and Fragments
         String titles[] =  {getString(R.string.nearest_freifunk), getString(R.string.ssids)};
-        myFragmentPagerAdapter = new MyFragmentPagerAdapter(getFragmentManager(), titles);
+        myFragmentPagerAdapter = new MyFragmentPagerAdapter(getSupportFragmentManager(), titles);
 
         viewPager = (ViewPager) findViewById(R.id.viewpager);
         viewPager.setAdapter(myFragmentPagerAdapter);
