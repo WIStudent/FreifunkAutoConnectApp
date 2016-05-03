@@ -63,9 +63,12 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
                     if (wificonf != null) {
                         for (WifiConfiguration wc : wificonf) {
                             if (wc.SSID.equals(n.ssid)) {
-                                // Only set active to false if the removal was successful
-                                n.active = !wifiManager.removeNetwork(wc.networkId);
+                                boolean removal_successful = wifiManager.removeNetwork(wc.networkId);
+                                // Save configuration
+                                boolean save_successful = wifiManager.saveConfiguration();
 
+                                // Only set active to false if the removal was successful
+                                n.active = !(removal_successful && save_successful);
                                 // If the network is still active, inform the object registered as
                                 // onAdapterInteractionListener that the removal failed.
                                 if(n.active && onAdapterInteractionListener != null){
@@ -77,16 +80,18 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
                 }
                 // If the network is not in the network configuration, add it.
                 else {
-                    n.active = true;
                     // Add Network to network configuration
                     WifiConfiguration wc = new WifiConfiguration();
                     wc.SSID = n.ssid;
                     wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
                     int networkId = wifiManager.addNetwork(wc);
-                    wifiManager.enableNetwork(networkId, false);
+                    boolean add_successful = wifiManager.enableNetwork(networkId, false);
+                    // Save configuration
+                    boolean save_successful = wifiManager.saveConfiguration();
+
+                    // Only set active to true if the addition was successful
+                    n.active = add_successful && save_successful;
                 }
-                // Save configuration
-                wifiManager.saveConfiguration();
 
 
                 /*****  Notify the networkRecyclerAdapter that the item at adapterPosition was changed. *****/
