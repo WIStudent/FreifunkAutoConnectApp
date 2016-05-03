@@ -6,7 +6,7 @@ import android.support.v13.app.FragmentPagerAdapter;
 import android.view.ViewGroup;
 
 public class MyFragmentPagerAdapter extends FragmentPagerAdapter {
-    private final int PAGE_COUNT = 2;
+    private final static int PAGE_COUNT = 2;
     private String tabTitles[];
 
     public AddRemoveNetworksFragment addRemoveNetworksFragment;

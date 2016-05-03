@@ -30,6 +30,8 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.util.ArrayList;
 
+// TODO Maybe better switch to support fragments (android.support.v4.app.Fragment) for better compatability in the future
+
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
@@ -304,7 +306,7 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
         showProgress = true;
         progress_max_value = maxValue;
         progressBar.setMax(maxValue);
-        tv_progress.setText("0/" + progress_max_value);
+        tv_progress.setText(getString(R.string.progress, 0, progress_max_value));
         relativeLayout.setVisibility(RelativeLayout.GONE);
         searchView.setVisibility(SearchView.GONE);
         linearLayout.setVisibility(LinearLayout.VISIBLE);
@@ -321,7 +323,7 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
 
     private void updateProgressBar(int value){
         progressBar.setProgress(value);
-        tv_progress.setText(value + "/" + progress_max_value);
+        tv_progress.setText(getString(R.string.progress, value, progress_max_value));
     }
 
 

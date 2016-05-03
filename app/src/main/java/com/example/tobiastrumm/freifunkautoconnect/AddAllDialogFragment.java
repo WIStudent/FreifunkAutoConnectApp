@@ -12,7 +12,7 @@ public class AddAllDialogFragment extends DialogFragment {
         /**
          * This method should add all shown networks to the network configuration.
          */
-        public void addAllNetworks();
+        void addAllNetworks();
     }
 
     @Override

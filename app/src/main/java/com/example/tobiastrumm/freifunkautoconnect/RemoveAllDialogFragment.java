@@ -6,9 +6,6 @@ import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
-/**
- * Created by tobia_000 on 12.05.2015.
- */
 public class RemoveAllDialogFragment extends DialogFragment {
 
 
@@ -16,7 +13,7 @@ public class RemoveAllDialogFragment extends DialogFragment {
        /**
         * This method should remove all shown networks from the network configuration.
         */
-       public void removeAllNetworks();
+       void removeAllNetworks();
    }
 
     @Override

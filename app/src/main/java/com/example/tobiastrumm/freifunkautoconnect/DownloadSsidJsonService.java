@@ -17,12 +17,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 
-/**
- * Created by tobia_000 on 23.08.2015.
- */
 public class DownloadSsidJsonService extends IntentService {
 
     private final static String TAG = DownloadSsidJsonService.class.getSimpleName();
@@ -41,8 +37,8 @@ public class DownloadSsidJsonService extends IntentService {
     protected void onHandleIntent(Intent intent) {
 
         StringBuilder builder = new StringBuilder();
-        JSONObject downloaded_ssids = null;
-        JSONObject existing_ssids = null;
+        JSONObject downloaded_ssids;
+        JSONObject existing_ssids;
         try {
             // Download json File.
             Log.d(TAG, "Start downloading ssid file");
@@ -93,17 +89,10 @@ public class DownloadSsidJsonService extends IntentService {
             SharedPreferences sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPref.edit();
             editor.putLong(getString(R.string.preference_timestamp_last_ssid_download), System.currentTimeMillis() / 1000L);
-            editor.commit();
+            editor.apply();
 
-        } catch (MalformedURLException e) {
+        } catch (IOException | JSONException e) {
             e.printStackTrace();
-            return;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return;
         }
     }
 

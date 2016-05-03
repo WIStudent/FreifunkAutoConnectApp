@@ -5,9 +5,6 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.os.Bundle;
 
-/**
- * Created by tobia_000 on 02.05.2016.
- */
 public class RemoveAllRemovalFailedDialogFragment extends DialogFragment{
 
     public final static String ARGUMENT_NUMBER_FAILED_REMOVAL = "number_failed_removal";

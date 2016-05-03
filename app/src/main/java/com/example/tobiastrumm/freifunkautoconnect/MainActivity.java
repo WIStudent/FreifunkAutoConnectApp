@@ -77,10 +77,10 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
                 FragmentLifecycle fragmentToShow;
                 switch (newPosition) {
                     case 0:
-                        fragmentToShow = (FragmentLifecycle) myFragmentPagerAdapter.nearestNodesFragment;
+                        fragmentToShow = myFragmentPagerAdapter.nearestNodesFragment;
                         break;
                     case 1:
-                        fragmentToShow = (FragmentLifecycle) myFragmentPagerAdapter.addRemoveNetworksFragment;
+                        fragmentToShow = myFragmentPagerAdapter.addRemoveNetworksFragment;
                         break;
                     default:
                         fragmentToShow = new FragmentLifecycle() {
@@ -97,10 +97,10 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
                 FragmentLifecycle fragmentToHide;
                 switch (currentPosition) {
                     case 0:
-                        fragmentToHide = (FragmentLifecycle) myFragmentPagerAdapter.nearestNodesFragment;
+                        fragmentToHide = myFragmentPagerAdapter.nearestNodesFragment;
                         break;
                     case 1:
-                        fragmentToHide = (FragmentLifecycle) myFragmentPagerAdapter.addRemoveNetworksFragment;
+                        fragmentToHide = myFragmentPagerAdapter.addRemoveNetworksFragment;
                         break;
                     default:
                         fragmentToHide = new FragmentLifecycle() {

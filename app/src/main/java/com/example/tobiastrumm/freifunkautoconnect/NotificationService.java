@@ -34,9 +34,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by Tobias on 29.07.2015.
- */
 public class NotificationService extends Service {
 
     private final static String TAG = NotificationService.class.getSimpleName();
@@ -56,7 +53,7 @@ public class NotificationService extends Service {
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "onReceive was called");
             boolean alreadyConnectedToFreifunk = false;
-            boolean alreadyConnectedToAnyNetwork = false;
+            boolean alreadyConnectedToAnyNetwork;
 
             WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
             List<ScanResult> results = wm.getScanResults();
@@ -136,19 +133,22 @@ public class NotificationService extends Service {
             SharedPreferences prefMan = PreferenceManager.getDefaultSharedPreferences(NotificationService.this);
             boolean vibrate = prefMan.getBoolean("pref_notification_vibrate", true);
             boolean playSound = prefMan.getBoolean("pref_notification_sound", false);
-            if(vibrate && playSound){
-                mBuilder.setDefaults(Notification.DEFAULT_ALL);
-            }
-            else if(!vibrate && playSound){
-                mBuilder.setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND);
-            }
-            else if(vibrate && !playSound){
-                mBuilder.setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE);
+            if(vibrate){
+                if(playSound){
+                    mBuilder.setDefaults(Notification.DEFAULT_ALL);
+                }
+                else{
+                    mBuilder.setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE);
+                }
             }
             else{
-                mBuilder.setDefaults(Notification.DEFAULT_LIGHTS);
+                if(playSound){
+                    mBuilder.setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND);
+                }
+                else{
+                    mBuilder.setDefaults(Notification.DEFAULT_LIGHTS);
+                }
             }
-
             mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
             Log.d(TAG, "Notification was sent.");
         }

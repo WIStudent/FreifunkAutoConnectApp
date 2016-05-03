@@ -5,10 +5,6 @@ import android.net.wifi.WifiConfiguration;
 import java.util.Comparator;
 
 /**
- * Created by tobia_000 on 25.07.2015.
- */
-
-/**
  * Custom Comparator that lets you compare the SSID of a WifiConfiguration Object with a String (another SSID)
  */
 public class WifiConfigurationSSIDComparator implements Comparator<Object> {

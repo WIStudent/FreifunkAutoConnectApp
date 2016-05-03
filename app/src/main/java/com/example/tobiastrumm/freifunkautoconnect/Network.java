@@ -2,6 +2,7 @@ package com.example.tobiastrumm.freifunkautoconnect;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 
 public class Network implements Comparable<Network>, Parcelable{
 
@@ -14,7 +15,7 @@ public class Network implements Comparable<Network>, Parcelable{
     }
 
     @Override
-    public int compareTo(Network o) {
+    public int compareTo(@NonNull Network o) {
         // Cut of the quotation marks before compairing the SSIDs.
         String ssid1 = ssid.substring(1,ssid.length()-1);
         String ssid2 = o.ssid.substring(1, o.ssid.length()-1);
@@ -34,7 +35,7 @@ public class Network implements Comparable<Network>, Parcelable{
         if(o == this){
             return true;
         }
-        return hashCode() == ((Network)o).hashCode();
+        return hashCode() == o.hashCode();
     }
 
     @Override

@@ -74,7 +74,7 @@ public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapte
 
     /**
      * Add a list of items to the recycler
-     * @param list
+     * @param list A list containing the items that should be added.
      */
     public void addAll(List<Node> list){
         nodelist.addAll(list);
@@ -123,12 +123,12 @@ public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapte
         }
 
         if(node.distance < 1000){
-            holder.tv_distance.setText((int)node.distance +  " m");
+            holder.tv_distance.setText(context.getString(R.string.distance_m, (int)node.distance));
         }
         else{
             double distance_km = node.distance / 1000.0d;
             String distance_string = new DecimalFormat("###.000").format(distance_km);
-            holder.tv_distance.setText(distance_string + " km");
+            holder.tv_distance.setText(context.getString(R.string.distance_km, distance_string));
         }
     }
 

@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.percent.PercentRelativeLayout;
 import android.support.v13.app.FragmentCompat;
 import android.support.v4.content.ContextCompat;
@@ -35,6 +36,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+// TODO Maybe better switch to support fragments (android.support.v4.app.Fragment) for better compatability in the future
 
 /**
  * A simple {@link Fragment} subclass.
@@ -313,7 +315,7 @@ public class NearestNodesFragment extends Fragment implements NodeRecyclerAdapte
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,@NonNull int[] grantResults) {
         switch(requestCode){
             case PERMISSION_REQUEST_FINE_LOCATION:
                 if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
@@ -377,7 +379,7 @@ public class NearestNodesFragment extends Fragment implements NodeRecyclerAdapte
     private void registerBroadcastReceivers(){
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getActivity());
         IntentFilter findNearestNodesIntentFilter = new IntentFilter(FindNearestNodesService.BROADCAST_ACTION);
-        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(findNearestNodesResponseReceiver, findNearestNodesIntentFilter);
+        lbm.registerReceiver(findNearestNodesResponseReceiver, findNearestNodesIntentFilter);
     }
 
     private void unregisterBroadcastReceivers(){
