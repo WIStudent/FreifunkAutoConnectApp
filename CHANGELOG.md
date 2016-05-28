@@ -1,8 +1,14 @@
 # Change Log
 ##[unreleased] - [unreleased]
+### Added
+- User will be notified if a network cannot be removed.
+- Outdated SSIDs will not be shown anymore per default. The user can change this in the settings. Outdated SSIDs that are saved in the network configuration will be marked as outdated.
+
 ### Changed
+- Improved UI
 - Improved compatability
-- Retrive Freifunk node locations in a compressed file to save traffic
+- Code improvements
+- Retrive Freifunk node locations in a compressed file to save traffic.
 
 ## [0.6.1] - 2015-10-31
 ### Changed
