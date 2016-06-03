@@ -30,8 +30,6 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.util.ArrayList;
 
-// TODO Maybe better switch to support fragments (android.support.v4.app.Fragment) for better compatability in the future
-
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the

@@ -1,5 +1,5 @@
 # Change Log
-##[unreleased] - [unreleased]
+##[0.7] - 2016-06-03
 ### Added
 - User will be notified if a network cannot be removed.
 - Outdated SSIDs will not be shown anymore per default. The user can change this in the settings. Outdated SSIDs that are saved in the network configuration will be marked as outdated.
