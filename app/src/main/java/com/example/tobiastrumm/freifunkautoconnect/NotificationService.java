@@ -276,7 +276,9 @@ public class NotificationService extends Service {
         catch(IOException e){
             Log.w(TAG, "Could not read SSIDs from csv file.");
             // Release the wake lock
-            WakefulBroadcastReceiver.completeWakefulIntent(intent);
+            if(intent != null) {
+                WakefulBroadcastReceiver.completeWakefulIntent(intent);
+            }
             stopSelf();
         }
 
@@ -289,7 +291,9 @@ public class NotificationService extends Service {
         registerReceiver(updateSSIDsReceiver, new IntentFilter(DownloadSsidJsonService.BROADCAST_ACTION));
 
         // Release the wake lock
-        WakefulBroadcastReceiver.completeWakefulIntent(intent);
+        if(intent != null) {
+            WakefulBroadcastReceiver.completeWakefulIntent(intent);
+        }
         return START_STICKY;
     }
 
