@@ -9,6 +9,7 @@ android:
     - android-24
     - extra-android-support
     - extra-android-m2repository
+    - sys-img-armeabi-v7a-android-22
 
 # Emulator Management: Create, Start and Wait
 before_script:
