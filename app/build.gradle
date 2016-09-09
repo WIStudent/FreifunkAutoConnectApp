@@ -21,6 +21,11 @@ android {
         }
     }
 
+    dexOptions {
+        // Skip pre-dexing when running on Travis CI or then disabled via -Dpre-dex=false
+        preDexLibraries = preDexEnabled && !travisBuild
+    }
+
     sourceSets { main { res.srcDirs = ['src/main/res', 'src/main/res/values-de'] } }
 
     lintOptions {
