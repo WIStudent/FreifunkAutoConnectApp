@@ -36,23 +36,19 @@ public class SettingsActivity extends AppCompatActivity {
             PreferenceManager prefMan = getPreferenceManager();
 
             SwitchPreference switchPref = (SwitchPreference) prefMan.findPreference("pref_notification");
-            switchPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            switchPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                boolean myValue = (Boolean) newValue;
 
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                if (myValue)
+                    getActivity().startService(new Intent(getActivity(), NotificationService.class));
+                else
+                    getActivity().stopService(new Intent(getActivity(), NotificationService.class));
 
-                    boolean myValue = (Boolean) newValue;
+                switchfNoNotificationConnected.setEnabled(myValue);
+                switchVibrate.setEnabled(myValue);
+                switchPlaySound.setEnabled(myValue);
 
-                    if (myValue)
-                        getActivity().startService(new Intent(getActivity(), NotificationService.class));
-                    else
-                        getActivity().stopService(new Intent(getActivity(), NotificationService.class));
-
-                    switchfNoNotificationConnected.setEnabled(myValue);
-                    switchVibrate.setEnabled(myValue);
-                    switchPlaySound.setEnabled(myValue);
-
-                    return true;
-                }
+                return true;
             });
 
             switchfNoNotificationConnected = (SwitchPreference) prefMan.findPreference("pref_no_notification_connected");
@@ -64,14 +60,11 @@ public class SettingsActivity extends AppCompatActivity {
             switchPlaySound = (SwitchPreference) prefMan.findPreference("pref_notification_sound");
             switchPlaySound.setEnabled(switchPref.isChecked());
 
-            Preference.OnPreferenceChangeListener restartServiceListener = new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    // Restart NotificationService
-                    getActivity().stopService(new Intent(getActivity(), NotificationService.class));
-                    getActivity().startService(new Intent(getActivity(), NotificationService.class));
-                    return true;
-                }
+            Preference.OnPreferenceChangeListener restartServiceListener = (preference, newValue) -> {
+                // Restart NotificationService
+                getActivity().stopService(new Intent(getActivity(), NotificationService.class));
+                getActivity().startService(new Intent(getActivity(), NotificationService.class));
+                return true;
             };
             switchfNoNotificationConnected.setOnPreferenceChangeListener(restartServiceListener);
             switchVibrate.setOnPreferenceChangeListener(restartServiceListener);
@@ -102,17 +95,14 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             });
             // Number of APs was saved as String, now save it as int too.
-            editTextNumberNodes.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                    SharedPreferences.Editor editor = sp.edit();
-                    editor.putInt("pref_nearest_ap_number_nodes", Integer.valueOf((String) newValue));
-                    editor.apply();
-                    // update summary
-                    editTextNumberNodes.setSummary((String)newValue);
-                    return true;
-                }
+            editTextNumberNodes.setOnPreferenceChangeListener((preference, newValue) -> {
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                SharedPreferences.Editor editor = sp.edit();
+                editor.putInt("pref_nearest_ap_number_nodes", Integer.valueOf((String) newValue));
+                editor.apply();
+                // update summary
+                editTextNumberNodes.setSummary((String)newValue);
+                return true;
             });
         }
     }

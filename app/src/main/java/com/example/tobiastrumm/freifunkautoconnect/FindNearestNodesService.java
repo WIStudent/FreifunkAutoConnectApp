@@ -28,7 +28,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.zip.GZIPInputStream;
 
@@ -252,13 +251,7 @@ public class FindNearestNodesService extends IntentService {
         long elapsedTime = stopTime - startTime;
         Log.d(TAG, "Duration calculating distances: " + elapsedTime + " ms");
 
-        Arrays.sort(nodes, new Comparator<Node>(){
-
-            @Override
-            public int compare(Node n1, Node n2) {
-                return Double.compare(n1.distance, n2.distance);
-            }
-        });
+        Arrays.sort(nodes, (n1, n2) -> Double.compare(n1.distance, n2.distance));
 
         // Get x nearest nodes
         Node[] nearest_nodes = new Node[numberOfNodes];

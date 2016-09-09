@@ -10,6 +10,9 @@ android {
         targetSdkVersion 24
         versionCode 8
         versionName "0.7"
+        jackOptions {
+            enabled true
+        }
     }
     buildTypes {
         release {
@@ -22,6 +25,11 @@ android {
 
     lintOptions {
         abortOnError false
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }
 

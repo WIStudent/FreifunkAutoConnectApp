@@ -33,13 +33,10 @@ public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapte
             tv_distance = (TextView) itemView.findViewById(R.id.tv_node_item_distance);
 
             // Setup the click listener
-            itemView.setOnClickListener(new View.OnClickListener(){
-                @Override
-                public void onClick(View v) {
-                    // Triggers click upwards to the adapter on click
-                    if(listener != null){
-                        listener.onItemClick(itemView, getLayoutPosition(), getAdapterPosition());
-                    }
+            itemView.setOnClickListener(v -> {
+                // Triggers click upwards to the adapter on click
+                if(listener != null){
+                    listener.onItemClick(itemView, getLayoutPosition(), getAdapterPosition());
                 }
             });
         }

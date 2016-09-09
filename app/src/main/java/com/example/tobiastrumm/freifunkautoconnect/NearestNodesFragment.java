@@ -172,12 +172,7 @@ public class NearestNodesFragment extends Fragment implements NodeRecyclerAdapte
 
         rl_location_warning = (PercentRelativeLayout)view.findViewById(R.id.rl_location_warning);
         Button btn_location_warning_retry = (Button) view.findViewById(R.id.btn_location_warning_retry);
-        btn_location_warning_retry.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                NearestNodesFragment.this.startFindNearestNodesServiceWithProgressBar();
-            }
-        });
+        btn_location_warning_retry.setOnClickListener(v -> NearestNodesFragment.this.startFindNearestNodesServiceWithProgressBar());
         Button btn_location_warning_permission = (Button) view.findViewById(R.id.btn_location_warning_permission);
         if(android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
         {
@@ -185,22 +180,11 @@ public class NearestNodesFragment extends Fragment implements NodeRecyclerAdapte
             btn_location_warning_permission.setVisibility(View.GONE);
         }
         {
-            btn_location_warning_permission.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    NearestNodesFragment.this.openApplicationSettingsPage();
-                }
-            });
+            btn_location_warning_permission.setOnClickListener(v -> NearestNodesFragment.this.openApplicationSettingsPage());
         }
 
         swipeContainer = (SwipeRefreshLayout) view.findViewById(R.id.sc_nearest_nodes);
-        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                // Start FindNearestNodeService
-                startFindNearestNodesService();
-            }
-        });
+        swipeContainer.setOnRefreshListener(this::startFindNearestNodesService);
         // Configure the refreshing colors
         swipeContainer.setColorSchemeResources(R.color.accent);
 

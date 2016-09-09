@@ -191,18 +191,8 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
         rv.setLayoutManager(new LinearLayoutManager(getActivity()));
 
         // Set OnClickListeners for the buttons
-        view.findViewById(R.id.btn_add_all).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mListener.showDialogAddAllNetworks();
-            }
-        });
-        view.findViewById(R.id.btn_remove_all).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mListener.showDialogRemoveAllNetworks();
-            }
-        });
+        view.findViewById(R.id.btn_add_all).setOnClickListener(view1 -> mListener.showDialogAddAllNetworks());
+        view.findViewById(R.id.btn_remove_all).setOnClickListener(view1 -> mListener.showDialogRemoveAllNetworks());
 
         return view;
     }

@@ -34,12 +34,9 @@ public class DummyFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_dummy, container, false);
         Button btn = (Button) view;
         btn.setText("Fragment #" + mPage);
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getActivity(), FindNearestNodesService.class);
-                getActivity().startService(intent);
-            }
+        btn.setOnClickListener(view1 -> {
+            Intent intent = new Intent(getActivity(), FindNearestNodesService.class);
+            getActivity().startService(intent);
         });
 
         return view;
