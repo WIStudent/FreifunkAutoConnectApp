@@ -19,15 +19,35 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewTreeObserver;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnPageChange;
+
+import static butterknife.OnPageChange.Callback.PAGE_SCROLL_STATE_CHANGED;
+import static butterknife.OnPageChange.Callback.PAGE_SELECTED;
+
 
 public class MainActivity extends AppCompatActivity implements AddRemoveNetworksFragment.OnFragmentInteractionListener, RemoveAllDialogFragment.OnRemoveAllListener, AddAllDialogFragment.OnAddAllListener, NearestNodesFragment.OnFragmentInteractionListener{
 
     private static String TAG = MainActivity.class.getSimpleName();
 
     private MyFragmentPagerAdapter myFragmentPagerAdapter;
+    int currentPagerPosition = 0;
 
-    private AppBarLayout appBarLayout;
-    private ViewPager viewPager;
+    @BindView(R.id.appbar)
+    AppBarLayout appBarLayout;
+
+    @BindView(R.id.viewpager)
+    ViewPager viewPager;
+
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+
+    @BindView(R.id.tabLayout)
+    TabLayout tabLayout;
+
+    @BindView(R.id.coordinatorlayout)
+    CoordinatorLayout coordinatorLayout;
 
 
     private void checkForNewSsidFile(){
@@ -50,77 +70,23 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Bind with ButterKnife annotated fields/methods to this activity.
+        ButterKnife.bind(this);
+
         // Use Toolbar instead of ActionBar. See:
         // http://blog.xamarin.com/android-tips-hello-toolbar-goodbye-action-bar/
         // https://stackoverflow.com/questions/29055491/android-toolbar-for-api-19-for-api-21-works-ok
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        appBarLayout = (AppBarLayout)findViewById(R.id.appbar);
 
         // Setup Tabs and Fragments
         String titles[] =  {getString(R.string.nearest_freifunk), getString(R.string.ssids)};
         myFragmentPagerAdapter = new MyFragmentPagerAdapter(getSupportFragmentManager(), titles);
 
-        viewPager = (ViewPager) findViewById(R.id.viewpager);
         viewPager.setAdapter(myFragmentPagerAdapter);
-        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
 
-            int currentPosition = 0;
-
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-            }
-
-            @Override
-            public void onPageSelected(int newPosition) {
-                FragmentLifecycle fragmentToShow;
-                switch (newPosition) {
-                    case 0:
-                        fragmentToShow = myFragmentPagerAdapter.nearestNodesFragment;
-                        break;
-                    case 1:
-                        fragmentToShow = myFragmentPagerAdapter.addRemoveNetworksFragment;
-                        break;
-                    default:
-                        fragmentToShow = null;
-                }
-
-                FragmentLifecycle fragmentToHide;
-                switch (currentPosition) {
-                    case 0:
-                        fragmentToHide = myFragmentPagerAdapter.nearestNodesFragment;
-                        break;
-                    case 1:
-                        fragmentToHide = myFragmentPagerAdapter.addRemoveNetworksFragment;
-                        break;
-                    default:
-                        fragmentToHide = null;
-                }
-
-                if (fragmentToShow != null) {
-                    fragmentToShow.onResumeFragment();
-                }
-                if (fragmentToHide != null) {
-                    fragmentToHide.onPauseFragment();
-                }
-                currentPosition = newPosition;
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-                if(state == ViewPager.SCROLL_STATE_DRAGGING){
-                    // Expand Toolbar if the tab was switched.
-                    appBarLayout.setExpanded(true, true);
-                }
-            }
-        });
-
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabLayout);
         tabLayout.setTabMode(TabLayout.MODE_FIXED);
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
         tabLayout.setupWithViewPager(viewPager);
-
 
         // Start NotificationService if it should running but isn't
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -130,6 +96,55 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
         }
 
         checkForNewSsidFile();
+    }
+
+    /*
+        onPageSelected callback for the viewPager, bound to it with ButterKnife
+     */
+    @OnPageChange(value = R.id.viewpager, callback = PAGE_SELECTED)
+    void onPageSelected(int newPosition) {
+        FragmentLifecycle fragmentToShow;
+        switch (newPosition) {
+            case 0:
+                fragmentToShow = myFragmentPagerAdapter.nearestNodesFragment;
+                break;
+            case 1:
+                fragmentToShow = myFragmentPagerAdapter.addRemoveNetworksFragment;
+                break;
+            default:
+                fragmentToShow = null;
+        }
+
+        FragmentLifecycle fragmentToHide;
+        switch (currentPagerPosition) {
+            case 0:
+                fragmentToHide = myFragmentPagerAdapter.nearestNodesFragment;
+                break;
+            case 1:
+                fragmentToHide = myFragmentPagerAdapter.addRemoveNetworksFragment;
+                break;
+            default:
+                fragmentToHide = null;
+        }
+
+        if (fragmentToShow != null) {
+            fragmentToShow.onResumeFragment();
+        }
+        if (fragmentToHide != null) {
+            fragmentToHide.onPauseFragment();
+        }
+        currentPagerPosition = newPosition;
+    }
+
+    /*
+        onPageScrollStateChanged callback for the viewPager, bound to it with ButterKnife
+     */
+    @OnPageChange(value = R.id.viewpager, callback = PAGE_SCROLL_STATE_CHANGED)
+    void onPageScrollStateChanged(int state) {
+        if(state == ViewPager.SCROLL_STATE_DRAGGING){
+            // Expand Toolbar if the tab was switched.
+            appBarLayout.setExpanded(true, true);
+        }
     }
 
     @Override
@@ -146,7 +161,6 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
          * padding of the ViewPager as soon as the layout is ready to be changed. The Listener then removes itself to prevent
          * further calls.
          ********************************/
-        final CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinatorlayout);
         coordinatorLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @SuppressLint("NewApi")
             @SuppressWarnings("deprecation")
