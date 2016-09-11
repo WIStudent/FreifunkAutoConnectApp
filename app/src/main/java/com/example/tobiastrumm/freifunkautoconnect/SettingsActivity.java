@@ -117,6 +117,7 @@ public class SettingsActivity extends AppCompatActivity {
         // Toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         // Neccessary or a new SettingsFragment will be created every time the screen is rotated.
         if(savedInstanceState == null) {
