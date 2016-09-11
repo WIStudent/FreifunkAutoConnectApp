@@ -83,15 +83,7 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
                         fragmentToShow = myFragmentPagerAdapter.addRemoveNetworksFragment;
                         break;
                     default:
-                        fragmentToShow = new FragmentLifecycle() {
-                            @Override
-                            public void onPauseFragment() {
-                            }
-
-                            @Override
-                            public void onResumeFragment() {
-                            }
-                        };
+                        fragmentToShow = null;
                 }
 
                 FragmentLifecycle fragmentToHide;
@@ -103,15 +95,7 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
                         fragmentToHide = myFragmentPagerAdapter.addRemoveNetworksFragment;
                         break;
                     default:
-                        fragmentToHide = new FragmentLifecycle() {
-                            @Override
-                            public void onPauseFragment() {
-                            }
-
-                            @Override
-                            public void onResumeFragment() {
-                            }
-                        };
+                        fragmentToHide = null;
                 }
 
                 if (fragmentToShow != null) {
@@ -120,8 +104,6 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
                 if (fragmentToHide != null) {
                     fragmentToHide.onPauseFragment();
                 }
-
-
                 currentPosition = newPosition;
             }
 
