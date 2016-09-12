@@ -36,7 +36,10 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-// TODO Maybe better switch to support fragments (android.support.v4.app.Fragment) for better compatability in the future
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -54,25 +57,28 @@ public class NearestNodesFragment extends Fragment implements NodeRecyclerAdapte
 
     private OnFragmentInteractionListener mListener;
 
+    @BindView(R.id.rv_nearest_nodes) RecyclerView rv_nearest_nodes;
+
     // ArrayList
     private NodeRecyclerAdapter nodeRecyclerAdapter;
 
     // TextView last_update
-    private TextView tv_last_update;
+    @BindView(R.id.tv_last_update) TextView tv_last_update;
     private String last_updated_text;
 
     // ProgressBar
-    private ProgressBar progressBar;
-    private RelativeLayout relativeLayout;
+    @BindView(R.id.progressbar_loading) ProgressBar progressBar;
+    @BindView(R.id.rl_nearest_nodes) RelativeLayout relativeLayout;
     private boolean showProgress;
 
     // GPS warning
-    private PercentRelativeLayout rl_location_warning;
+    @BindView(R.id.btn_location_warning_permission) Button btn_location_warning_permission;
+    @BindView(R.id.rl_location_warning) PercentRelativeLayout rl_location_warning;
     private boolean showLocationWarning = false;
 
     private int last_orientation;
 
-    private SwipeRefreshLayout swipeContainer;
+    @BindView(R.id.sc_nearest_nodes) SwipeRefreshLayout swipeContainer;
 
     private FindNearestNodesResponseReceiver findNearestNodesResponseReceiver;
 
@@ -157,33 +163,21 @@ public class NearestNodesFragment extends Fragment implements NodeRecyclerAdapte
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_nearest_nodes, container, false);
-
-        relativeLayout = (RelativeLayout)view.findViewById(R.id.rl_nearest_nodes);
+        ButterKnife.bind(this, view);
 
         // Setup RecyclerView
-        RecyclerView rv_nearest_nodes = (RecyclerView) view.findViewById(R.id.rv_nearest_nodes);
         rv_nearest_nodes.setAdapter(nodeRecyclerAdapter);
         rv_nearest_nodes.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        tv_last_update = (TextView)view.findViewById(R.id.tv_last_update);
         tv_last_update.setText(last_updated_text);
 
-        progressBar = (ProgressBar)view.findViewById(R.id.progressbar_loading);
 
-        rl_location_warning = (PercentRelativeLayout)view.findViewById(R.id.rl_location_warning);
-        Button btn_location_warning_retry = (Button) view.findViewById(R.id.btn_location_warning_retry);
-        btn_location_warning_retry.setOnClickListener(v -> NearestNodesFragment.this.startFindNearestNodesServiceWithProgressBar());
-        Button btn_location_warning_permission = (Button) view.findViewById(R.id.btn_location_warning_permission);
         if(android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
         {
             // If the running Android OS is older than Android M (SDK 23), do not show this button
             btn_location_warning_permission.setVisibility(View.GONE);
         }
-        {
-            btn_location_warning_permission.setOnClickListener(v -> NearestNodesFragment.this.openApplicationSettingsPage());
-        }
 
-        swipeContainer = (SwipeRefreshLayout) view.findViewById(R.id.sc_nearest_nodes);
         swipeContainer.setOnRefreshListener(this::startFindNearestNodesService);
         // Configure the refreshing colors
         swipeContainer.setColorSchemeResources(R.color.accent);
@@ -191,6 +185,15 @@ public class NearestNodesFragment extends Fragment implements NodeRecyclerAdapte
         return view;
     }
 
+    @OnClick(R.id.btn_location_warning_retry)
+    void onClickLocationWarningRetry(){
+        startFindNearestNodesServiceWithProgressBar();
+    }
+
+    @OnClick(R.id.btn_location_warning_permission)
+    void onclickLocationWarningPermission(){
+        openApplicationSettingsPage();
+    }
 
     private void showProgressBar(){
         showLocationWarning = false;
