@@ -12,33 +12,34 @@ import android.widget.TextView;
 import java.text.DecimalFormat;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
 
 /**
  * See https://guides.codepath.com/android/Using-the-RecyclerView for a tutorial on RecyclerView and
  * RecyclerView.Adapter
  */
-public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapter.ViewHolder> {
+class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapter.ViewHolder> {
 
-    public class ViewHolder extends RecyclerView.ViewHolder{
+    class ViewHolder extends RecyclerView.ViewHolder{
 
-        public TextView tv_name;
-        public TextView tv_status;
-        public TextView tv_distance;
+        @BindView(R.id.tv_node_item_name) TextView tv_name;
+        @BindView(R.id.tv_node_item_status) TextView tv_status;
+        @BindView(R.id.tv_node_item_distance) TextView tv_distance;
 
-        public ViewHolder(final View itemView) {
+        ViewHolder(final View itemView) {
             super(itemView);
+            ButterKnife.bind(this, itemView);
+        }
 
-            tv_name = (TextView) itemView.findViewById(R.id.tv_node_item_name);
-            tv_status = (TextView) itemView.findViewById(R.id.tv_node_item_status);
-            tv_distance = (TextView) itemView.findViewById(R.id.tv_node_item_distance);
-
-            // Setup the click listener
-            itemView.setOnClickListener(v -> {
-                // Triggers click upwards to the adapter on click
-                if(listener != null){
-                    listener.onItemClick(itemView, getLayoutPosition(), getAdapterPosition());
-                }
-            });
+        @OnClick
+        void onClick(View itemView){
+            // Triggers click upwards to the adapter on click
+            if(listener != null){
+                listener.onItemClick(itemView, getLayoutPosition(), getAdapterPosition());
+            }
         }
     }
 
@@ -46,25 +47,25 @@ public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapte
     private List<Node> nodelist;
 
     // Define the listener interface
-    public interface OnItemClickListener{
+    interface OnItemClickListener{
         void onItemClick(View itemView, int layoutPosition, int adapterPosition);
     }
     // Listener member variable
     private OnItemClickListener listener;
 
     // Define the method that allows the parent fragment to define the listener
-    public void setOnItemClickListener(OnItemClickListener listener){
+    void setOnItemClickListener(OnItemClickListener listener){
         this.listener = listener;
     }
 
-    public NodeRecyclerAdapter(List<Node> nodelist){
+    NodeRecyclerAdapter(List<Node> nodelist){
         this.nodelist = nodelist;
     }
 
     /**
      *  Clean all elements of the recycler
      */
-    public void clear(){
+    void clear(){
         nodelist.clear();
         notifyDataSetChanged();
     }
@@ -73,7 +74,7 @@ public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapte
      * Add a list of items to the recycler
      * @param list A list containing the items that should be added.
      */
-    public void addAll(List<Node> list){
+    void addAll(List<Node> list){
         nodelist.addAll(list);
         notifyDataSetChanged();
     }
@@ -83,7 +84,7 @@ public class NodeRecyclerAdapter extends RecyclerView.Adapter<NodeRecyclerAdapte
      * @param adapterPosition Position in the NodeRecyclerAdapter
      * @return Pointer to the Node object in the NodeRecyclerAdapter
      */
-    public Node getNode(int adapterPosition){
+    Node getNode(int adapterPosition){
         return nodelist.get(adapterPosition);
     }
 
