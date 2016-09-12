@@ -31,28 +31,29 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecyclerAdapter.ViewHolder> {
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
+class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecyclerAdapter.ViewHolder> {
 
     private static final String TAG = NetworkRecyclerAdapter.class.getSimpleName();
 
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    class ViewHolder extends RecyclerView.ViewHolder{
 
-        TextView tv_ssid;
+        @BindView(R.id.tv_network_item_ssid) TextView tv_ssid;
 
-        public ViewHolder(View itemView) {
+        ViewHolder(View itemView) {
             super(itemView);
-            tv_ssid = (TextView) itemView.findViewById(R.id.tv_network_item_ssid);
-
-            // Setup the click listener
-            itemView.setOnClickListener(this);
+            ButterKnife.bind(this, itemView);
         }
 
         /*
          * Handle the click on a ssid here. If the ssid is not already part of the network configuration, it
          * will be added, else it will be removed.
          */
-        @Override
-        public void onClick(View v) {
+        @OnClick
+        public void onClick() {
             int adapterPosition = getAdapterPosition();
             if(adapterPosition >= 0) {
                 // Get the Network object that was clicked.
@@ -165,7 +166,7 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
     private WifiManager wifiManager;
 
 
-    public NetworkRecyclerAdapter(Context context) {
+    NetworkRecyclerAdapter(Context context) {
         this.context = context;
         wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
 
@@ -228,7 +229,7 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
     // https://coderwall.com/p/zpwrsg/add-search-function-to-list-view-in-android
     // https://stackoverflow.com/questions/11840344/android-custom-arrayadapter-doesnt-refresh-after-filter
     // https://stackoverflow.com/questions/27903361/searchmenuitem-getactionview-returning-null
-    public Filter getFilter(){
+    Filter getFilter(){
         if(mNetworkFilter == null){
             mNetworkFilter = new NetworkFilter();
         }
@@ -241,7 +242,7 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
      * @param adapterPosition Position in the NodeRecyclerAdapter
      * @return Pointer to the Node object in the NodeRecyclerAdapter
      */
-    public Network getNetwork(int adapterPosition) {
+    private Network getNetwork(int adapterPosition) {
         return filteredNetworks.get(adapterPosition);
     }
 
@@ -249,7 +250,7 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
      * Returns pointer to the list of the shown networks in the RecyclerView
      * @return Pointer to the list of the shown networks
      */
-    public List<Network> getShownNetworks() {
+    List<Network> getShownNetworks() {
         return filteredNetworks;
     }
 
@@ -260,7 +261,7 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
      * this function was used.
      * @throws IOException
      */
-    public void updateSSIDsFromJsonFile() throws IOException {
+    void updateSSIDsFromJsonFile() throws IOException {
         // Check if ssids.json exists in internal storage.
         File ssidsJson = context.getFileStreamPath("ssids.json");
         if(!ssidsJson.exists()){
@@ -321,7 +322,7 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
      * Updates the list of SSIDs by checking which SSIDs are already included in the network configuration.
      * It is NOT necessary to call notifyDataSetChanged() after this function was used.
      */
-    public void updateNetworkStatus(){
+    void updateNetworkStatus(){
         // Check which Network is already added to the network configuration
         List<WifiConfiguration> wifiConf = wifiManager.getConfiguredNetworks();
         if (wifiConf != null) {
@@ -356,13 +357,13 @@ public class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecycler
      * NetworkRecyclerAdapter.
      ***************************/
 
-    public interface OnAdapterInteractionListener {
+    interface OnAdapterInteractionListener {
         void onRemoveSsidFailed();
     }
 
     private OnAdapterInteractionListener onAdapterInteractionListener = null;
 
-    public void setOnAdapterInteractionListener(OnAdapterInteractionListener listener){
+    void setOnAdapterInteractionListener(OnAdapterInteractionListener listener){
         onAdapterInteractionListener = listener;
     }
 }
