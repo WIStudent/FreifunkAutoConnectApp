@@ -30,6 +30,10 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
@@ -53,10 +57,12 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
     private String last_filter_term;
 
     // ProgressBar
-    private LinearLayout linearLayout;
-    private RelativeLayout relativeLayout;
-    private ProgressBar progressBar;
-    private TextView tv_progress;
+    @BindView(R.id.ll_add_remove_networks) LinearLayout linearLayout;
+    @BindView(R.id.rl_add_remove_networks) RelativeLayout relativeLayout;
+    @BindView(R.id.progressbar_add_remove_networks) ProgressBar progressBar;
+    @BindView(R.id.tv_progresbar) TextView tv_progress;
+    @BindView(R.id.rv_networks) RecyclerView rv;
+
     private boolean showProgress;
     private int progress_max_value;
 
@@ -179,22 +185,29 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_add_remove_networks, container, false);
-
-        linearLayout = (LinearLayout) view.findViewById(R.id.ll_add_remove_networks);
-        progressBar = (ProgressBar) view.findViewById(R.id.progressbar_add_remove_networks);
-        tv_progress = (TextView) view.findViewById(R.id.tv_progresbar);
-        relativeLayout = (RelativeLayout) view.findViewById(R.id.rl_add_remove_networks);
+        ButterKnife.bind(this, view);
 
         // Setup RecyclerView
-        RecyclerView rv = (RecyclerView) view.findViewById(R.id.rv_networks);
         rv.setAdapter(networkRecyclerAdapter);
         rv.setLayoutManager(new LinearLayoutManager(getActivity()));
 
-        // Set OnClickListeners for the buttons
-        view.findViewById(R.id.btn_add_all).setOnClickListener(view1 -> mListener.showDialogAddAllNetworks());
-        view.findViewById(R.id.btn_remove_all).setOnClickListener(view1 -> mListener.showDialogRemoveAllNetworks());
-
         return view;
+    }
+
+    /*
+        onClick method for the "Add all" button
+     */
+    @OnClick(R.id.btn_add_all)
+    void onClickAddAll(){
+        mListener.showDialogAddAllNetworks();
+    }
+
+    /*
+        onClick method for the "Remove all" button.
+     */
+    @OnClick(R.id.btn_remove_all)
+    void onClickRemoveAll(){
+        mListener.showDialogRemoveAllNetworks();
     }
 
     @Override
