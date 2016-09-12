@@ -34,20 +34,11 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
     private MyFragmentPagerAdapter myFragmentPagerAdapter;
     int currentPagerPosition = 0;
 
-    @BindView(R.id.appbar)
-    AppBarLayout appBarLayout;
-
-    @BindView(R.id.viewpager)
-    ViewPager viewPager;
-
-    @BindView(R.id.toolbar)
-    Toolbar toolbar;
-
-    @BindView(R.id.tabLayout)
-    TabLayout tabLayout;
-
-    @BindView(R.id.coordinatorlayout)
-    CoordinatorLayout coordinatorLayout;
+    @BindView(R.id.appbar) AppBarLayout appBarLayout;
+    @BindView(R.id.viewpager) ViewPager viewPager;
+    @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.tabLayout) TabLayout tabLayout;
+    @BindView(R.id.coordinatorlayout) CoordinatorLayout coordinatorLayout;
 
 
     private void checkForNewSsidFile(){
