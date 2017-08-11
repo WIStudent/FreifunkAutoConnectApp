@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -36,63 +37,112 @@ public class DownloadSsidJsonService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        StringBuilder builder = new StringBuilder();
-        JSONObject downloaded_ssids;
-        JSONObject existing_ssids;
+        String downloaded_ssids = downloadLatestSsidList();
+        if(downloaded_ssids == null){
+            responseNoNewFile();
+            return;
+        }
+
+        String existing_ssids = readSSsidListFromFile();
+        if(existing_ssids == null){
+            responseNoNewFile();
+            return;
+        }
+
+        // Compare version of downloaded and existing ssid files.
+        int version_existing_ssids, version_downloaded_ssids;
+        try {
+            JSONObject downloaded_ssids_json = new JSONObject(downloaded_ssids);
+            JSONObject existing_ssids_json = new JSONObject(existing_ssids);
+
+            version_existing_ssids = existing_ssids_json.getInt("version");
+            version_downloaded_ssids = downloaded_ssids_json.getInt("version");
+        } catch (JSONException e) {
+            Log.e(TAG, "Failed to parse JSON.", e);
+            responseNoNewFile();
+            return;
+        }
+
+        // If version of downloaded json file is bigger, replace existing json file.
+        Log.d(TAG, "Version of existing ssids.json: " + version_existing_ssids +  " Version of downloaded ssids.json: " + version_downloaded_ssids);
+        if(version_downloaded_ssids <= version_existing_ssids){
+            responseNoNewFile();
+            return;
+        }
+
+        try(FileOutputStream outputStream = openFileOutput("ssids.json", Context.MODE_PRIVATE)){
+            outputStream.write(downloaded_ssids.getBytes());
+            responseFileReplaced();
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to override existing ssids.json file.", e);
+            responseNoNewFile();
+        }
+    }
+
+    /**
+     *
+     * @return Returns the downloaded SSID list or null, if an error occurred.
+     */
+    private String downloadLatestSsidList(){
+
+        HttpURLConnection urlConnection = null;
         try {
             // Download json File.
             Log.d(TAG, "Start downloading ssid file");
             URL url = new URL(SSID_URL);
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(DownloadSsidJsonService.this);
+            String savedEtag = sharedPreferences.getString("pref_etag_ssids_json", null);
+            if (savedEtag != null) {
+                Log.d(TAG, "Setting Etag in http request " + savedEtag);
+                urlConnection.setRequestProperty("If-None-Match", savedEtag);
+            }
+
             int statusCode = urlConnection.getResponseCode();
-            if(statusCode == HttpURLConnection.HTTP_OK) {
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    builder.append(line);
-                }
-                downloaded_ssids = new JSONObject(builder.toString());
-            } else{
+            if (statusCode != HttpURLConnection.HTTP_OK) {
                 Log.w(TAG, url.toExternalForm() + " : Failed to download file. Response Code " + statusCode);
-                return;
+                return null;
             }
-            urlConnection.disconnect();
-            Log.d(TAG, "ssids.json was downloaded");
+            // Update saved Etag
+            String receivedEtag = urlConnection.getHeaderField("Etag");
+            SharedPreferences.Editor sharedPrefEditor = sharedPreferences.edit();
+            sharedPrefEditor.putString("pref_etag_ssids_json", receivedEtag);
+            sharedPrefEditor.apply();
 
-            // Read ssids.json from internal storage.
-            String jsonString = "";
-            InputStreamReader is = new InputStreamReader(openFileInput("ssids.json"));
-            BufferedReader reader = new BufferedReader(is);
+            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+            BufferedReader readerDownloadedJson = new BufferedReader(new InputStreamReader(in));
+            StringBuilder builder = new StringBuilder();
             String line;
-            while ((line = reader.readLine()) != null) {
-                jsonString += line;
+            while ((line = readerDownloadedJson.readLine()) != null) {
+                builder.append(line);
             }
-            reader.close();
-            existing_ssids = new JSONObject(jsonString);
-             // Compare version of downloaded and existing ssid files.
-            int version_existing_ssids = existing_ssids.getInt("version");
-            int version_downloaded_ssids = downloaded_ssids.getInt("version");
+            Log.d(TAG, "ssids.json was downloaded");
+            return builder.toString();
 
-            // If version of downloaded json file is bigger, replace existing json file.
-            Log.d(TAG, "Version of existing ssids.json: " + version_existing_ssids +  " Version of downloaded ssids.json: " + version_downloaded_ssids);
-            if(version_downloaded_ssids > version_existing_ssids){
-                FileOutputStream outputStream = openFileOutput("ssids.json", Context.MODE_PRIVATE);
-                outputStream.write(builder.toString().getBytes());
-                outputStream.close();
-                responseFileReplaced();
+        } catch (IOException e) {
+            Log.e(TAG, "Something went wrong while downloading lates ssids.json file", e);
+            return null;
+        } finally{
+            if(urlConnection != null){
+                urlConnection.disconnect();
             }
-            else{
-                responseNoNewFile();
+        }
+    }
+
+    private String readSSsidListFromFile(){
+        // Read ssids.json from internal storage.
+        StringBuilder builder = new StringBuilder();
+        try (BufferedReader existing_file_reader = new BufferedReader(new InputStreamReader(openFileInput("ssids.json")))){
+
+            String line;
+            while ((line = existing_file_reader.readLine()) != null) {
+                builder.append(line);
             }
-
-            SharedPreferences sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putLong(getString(R.string.preference_timestamp_last_ssid_download), System.currentTimeMillis() / 1000L);
-            editor.apply();
-
-        } catch (IOException | JSONException e) {
-            e.printStackTrace();
+            return builder.toString();
+        } catch ( IOException e) {
+            Log.e(TAG, "Something went wrong when reading from exisiting ssids.json file.", e);
+            return null;
         }
     }
 

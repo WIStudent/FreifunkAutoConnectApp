@@ -2,7 +2,6 @@ package com.example.tobiastrumm.freifunkautoconnect;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -14,7 +13,6 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewTreeObserver;
@@ -42,17 +40,8 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
 
 
     private void checkForNewSsidFile(){
-        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.preference_file_key), Context.MODE_PRIVATE);
-        long lastCheck = sharedPref.getLong(getString(R.string.preference_timestamp_last_ssid_download), 0);
-        long currentTime = System.currentTimeMillis() / 1000L;
-
-        Log.d(TAG, "Current timestamp: " + currentTime + " last check timestamp: " + lastCheck);
-
-        //if(currentTime - lastCheck > 24*60*60){
-            // Start DownloadSsidJsonService to check if a newer ssids.json file is available.
-            Intent intent = new Intent(this, DownloadSsidJsonService.class);
-            startService(intent);
-       // }
+        Intent intent = new Intent(this, DownloadSsidJsonService.class);
+        startService(intent);
     }
 
 
