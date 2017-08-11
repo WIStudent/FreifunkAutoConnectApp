@@ -15,7 +15,6 @@ import com.mapzen.android.lost.api.LostApiClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -146,6 +145,7 @@ public class FindNearestNodesService extends IntentService {
             urlConnection = (HttpURLConnection) url.openConnection();
             Long nodes_json_last_modified = sharedPreferences.getLong("pref_nearest_ap_nodes_json_last_modified", 0);
             urlConnection.setIfModifiedSince(nodes_json_last_modified);
+            urlConnection.setRequestProperty("Accept-Encoding", "gzip");
 
             int statusCode = urlConnection.getResponseCode();
             if (statusCode == HttpURLConnection.HTTP_OK) {
@@ -155,7 +155,7 @@ public class FindNearestNodesService extends IntentService {
 
                 // Download gzipped file
                 if(encoding != null && encoding.toLowerCase().contains("gzip")){
-                    responseStream = new BufferedInputStream(new GZIPInputStream(is));
+                    responseStream = new GZIPInputStream(is);
                     Log.d(TAG, NODES_JSON_URL + " is gzipped. Length: " +  urlConnection.getContentLength());
                 } else{
                     responseStream = is;
