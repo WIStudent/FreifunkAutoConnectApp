@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,6 +38,7 @@ public class FindNearestNodesService extends IntentService {
     private final static String NODES_JSON_URL = "http://freifunkapp.tobiastrumm.de/nodes2.json.gz";
     private final static String NODES_JSON_FILE_NAME = "nodes.json";
     private final static long UPDATE_INTERVAL = 60;
+    private final static int HTTP_REQUEST_TIMEOUT = 5000;
 
     public static final String BROADCAST_ACTION = "com.example.tobiastrumm.freifunkautoconnect.findnearestnodesservice.BROADCAST";
     public static final String STATUS_TYPE = "status_type";
@@ -143,6 +144,8 @@ public class FindNearestNodesService extends IntentService {
             Log.d(TAG, "Start downloading " + NODES_JSON_FILE_NAME + " file");
             URL url = new URL(NODES_JSON_URL);
             urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setConnectTimeout(HTTP_REQUEST_TIMEOUT);
+            urlConnection.setReadTimeout(HTTP_REQUEST_TIMEOUT);
             Long nodes_json_last_modified = sharedPreferences.getLong("pref_nearest_ap_nodes_json_last_modified", 0);
             urlConnection.setIfModifiedSince(nodes_json_last_modified);
             urlConnection.setRequestProperty("Accept-Encoding", "gzip");
@@ -179,12 +182,11 @@ public class FindNearestNodesService extends IntentService {
             } else {
                 Log.w(TAG, url.toExternalForm() + " : Failed to download " + NODES_JSON_FILE_NAME + ". Response Code " + statusCode);
             }
-
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
+        } catch (SocketTimeoutException e) {
+            Log.e(TAG, "Timeout:", e);
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally{
+            Log.e(TAG, "IOException:", e);
+        } finally {
             if(outputStream != null){
                 try {
                     outputStream.close();
