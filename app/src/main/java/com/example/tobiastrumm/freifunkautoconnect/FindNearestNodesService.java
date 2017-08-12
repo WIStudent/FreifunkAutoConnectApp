@@ -70,40 +70,46 @@ public class FindNearestNodesService extends IntentService {
     }
 
     private JSONObject getJsonFromLocalFile() {
-        try {
-            // Check if nodes.json exists in internal storage.
-            File nodesJson = getFileStreamPath(NODES_JSON_FILE_NAME);
-            if(!nodesJson.exists()){
-                Log.d(TAG, "Copy " + NODES_JSON_FILE_NAME + " to internal storage.");
-                // If not, copy nodes.json from assets to internal storage.
-                FileOutputStream outputStream = openFileOutput(NODES_JSON_FILE_NAME, Context.MODE_PRIVATE);
-                InputStream inputStream = getAssets().open(NODES_JSON_FILE_NAME);
+        // Check if nodes.json exists in internal storage.
+        File nodesJson = getFileStreamPath(NODES_JSON_FILE_NAME);
+        if(!nodesJson.exists()){
+            Log.d(TAG, "Copy " + NODES_JSON_FILE_NAME + " to internal storage.");
+            // If not, copy nodes.json from assets to internal storage.
+            try(FileOutputStream outputStream = openFileOutput(NODES_JSON_FILE_NAME, Context.MODE_PRIVATE);
+                InputStream inputStream = getAssets().open(NODES_JSON_FILE_NAME)) {
                 byte[] buffer = new byte[1024];
                 int bytesRead;
                 while((bytesRead = inputStream.read(buffer)) != -1){
                     outputStream.write(buffer, 0, bytesRead);
                 }
-                inputStream.close();
-                outputStream.close();
-                Log.d(TAG, "Finished copying " + NODES_JSON_FILE_NAME + " to internal storage");
+            } catch (IOException e) {
+                Log.e(TAG, "", e);
+                return null;
             }
+            Log.d(TAG, "Finished copying " + NODES_JSON_FILE_NAME + " to internal storage");
+        }
 
-            // Read nodes.json from internal storage.
-            String jsonString = "";
-            InputStreamReader is = new InputStreamReader(new FileInputStream(nodesJson));
-            BufferedReader reader = new BufferedReader(is);
+        // Read nodes.json from internal storage.
+        String nodes_json_string;
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(nodesJson)))){
+
+            StringBuilder stringBuilder = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
-                jsonString += line;
+                stringBuilder.append(line);
             }
-            reader.close();
-            return  new JSONObject(jsonString);
+            nodes_json_string = stringBuilder.toString();
 
-        } catch (IOException e){
-            e.printStackTrace();
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to read nodes.json from internal storage.", e);
             return null;
+        }
+
+        // Parse json
+        try{
+            return new JSONObject(nodes_json_string);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Failed parsing nodes.json.", e);
             return null;
         }
     }
@@ -128,17 +134,25 @@ public class FindNearestNodesService extends IntentService {
         }
     }
 
-    private void downloadLatestNodesJson() {
+    /**
+     * Tries to download a new nodes.json file. If a newer file is available online, the local one
+     * will be replaced and the JSONObject will be returned. If not, null will be returned. Null
+     * will also be returned, if the last successful check for a new file was done in the last 60
+     * seconds.
+     *
+     * @return JSONObject or null, if no newer version is available online.
+     */
+    private JSONObject downloadLatestNodesJson() {
         // Don't try downloading again until UPDATE_INTERVAL sec have passed since the last try.
         long currentTime = System.currentTimeMillis() / 1000L;
         long last_try_update_nodes = sharedPreferences.getLong("pref_nearest_ap_last_try_update_nodes", 0);
         if((currentTime - last_try_update_nodes) <= UPDATE_INTERVAL ){
             Log.d(TAG, "Not enough time has passed since the last try to download nodes.json.");
-            return;
+            return null;
         }
 
-        FileOutputStream outputStream = null;
         HttpURLConnection urlConnection = null;
+        String newer_nodes;
         try {
             // Download nodes.json.gz File.
             Log.d(TAG, "Start downloading " + NODES_JSON_FILE_NAME + " file");
@@ -151,54 +165,71 @@ public class FindNearestNodesService extends IntentService {
             urlConnection.setRequestProperty("Accept-Encoding", "gzip");
 
             int statusCode = urlConnection.getResponseCode();
-            if (statusCode == HttpURLConnection.HTTP_OK) {
-                String encoding = urlConnection.getContentEncoding();
-                InputStream is = urlConnection.getInputStream();
-                InputStream responseStream;
+            update_last_try_update_nodes();
 
-                // Download gzipped file
-                if(encoding != null && encoding.toLowerCase().contains("gzip")){
-                    responseStream = new GZIPInputStream(is);
-                    Log.d(TAG, NODES_JSON_URL + " is gzipped. Length: " +  urlConnection.getContentLength());
-                } else{
-                    responseStream = is;
-                    Log.d(TAG, NODES_JSON_URL + " is not gzipped. Length: " +  urlConnection.getContentLength());
-                }
-
-                // Write downloaded nodes.json to internal storage.
-                outputStream = openFileOutput(NODES_JSON_FILE_NAME, Context.MODE_PRIVATE);
-                byte[] buf = new byte[1024];
-                int len;
-                while ((len=responseStream.read(buf)) > 0) {
-                    outputStream.write(buf, 0, len);
-                }
-                Log.d(TAG, NODES_JSON_FILE_NAME + " was downloaded");
-
-                // Update last-modified value
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putLong("pref_nearest_ap_nodes_json_last_modified", urlConnection.getLastModified());
-                editor.apply();
-
-            } else {
+            if (statusCode != HttpURLConnection.HTTP_OK) {
                 Log.w(TAG, url.toExternalForm() + " : Failed to download " + NODES_JSON_FILE_NAME + ". Response Code " + statusCode);
+                return null;
             }
+            String encoding = urlConnection.getContentEncoding();
+            InputStream is = urlConnection.getInputStream();
+            BufferedReader bufferedReader;
+
+            // Download gzipped file
+            if (encoding != null && encoding.toLowerCase().contains("gzip")) {
+                bufferedReader = new BufferedReader(new InputStreamReader(new GZIPInputStream(is)));
+                Log.d(TAG, NODES_JSON_URL + " is gzipped. Length: " + urlConnection.getContentLength());
+            } else {
+                bufferedReader = new BufferedReader(new InputStreamReader(is));
+                Log.d(TAG, NODES_JSON_URL + " is not gzipped. Length: " + urlConnection.getContentLength());
+            }
+
+            StringBuilder stringBuilder = new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+            newer_nodes = stringBuilder.toString();
+
+            // Update last-modified value
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putLong("pref_nearest_ap_nodes_json_last_modified", urlConnection.getLastModified());
+            editor.apply();
+
         } catch (SocketTimeoutException e) {
             Log.e(TAG, "Timeout:", e);
+            return null;
         } catch (IOException e) {
             Log.e(TAG, "IOException:", e);
+            return null;
         } finally {
-            if(outputStream != null){
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
             if(urlConnection != null){
                 urlConnection.disconnect();
             }
         }
+
+        // Try parsing downloaded json
+        JSONObject newer_nodes_json;
+        try{
+            newer_nodes_json = new JSONObject(newer_nodes);
+        } catch (JSONException e) {
+            Log.e(TAG, "Failed parsing downloaded json.", e);
+            return null;
+        }
+
+
+        // Write downloaded nodes.json to internal storage.
+        try(FileOutputStream outputStream = openFileOutput(NODES_JSON_FILE_NAME, Context.MODE_PRIVATE)){
+            outputStream.write(newer_nodes.getBytes());
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to write newer nodes.json to file.", e);
+        }
+
+        Log.d(TAG, NODES_JSON_FILE_NAME + " was downloaded");
+        return newer_nodes_json;
+    }
+
+    private void update_last_try_update_nodes(){
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putLong("pref_nearest_ap_last_try_update_nodes", System.currentTimeMillis() / 1000L);
         editor.apply();
@@ -206,9 +237,12 @@ public class FindNearestNodesService extends IntentService {
 
 
     private void onConnected() {
-        downloadLatestNodesJson();
+        JSONObject json = downloadLatestNodesJson();
+        // If no newer nodes.json file was found online, use the local one.
+        if(json == null){
+            json = getJsonFromLocalFile();
+        }
 
-        JSONObject json = getJsonFromLocalFile();
         if(json == null){
             responseError();
             return;
