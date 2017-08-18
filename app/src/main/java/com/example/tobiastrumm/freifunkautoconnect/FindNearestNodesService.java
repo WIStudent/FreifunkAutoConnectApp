@@ -47,26 +47,36 @@ public class FindNearestNodesService extends IntentService {
     public static final String RETURN_NODES = "return_nodes";
     public static final String RETURN_LAST_UPDATE = "return_last_update";
 
-    private boolean showOfflineNodes;
-    private int numberOfNodes;
+
     private SharedPreferences sharedPreferences;
+    private LostApiClient lostApiClient;
 
     public FindNearestNodesService(){
         super("FindNearestNodesService");
     }
 
     @Override
-    protected void onHandleIntent(Intent intent) {
-
+    public void onCreate() {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(FindNearestNodesService.this);
-        showOfflineNodes = sharedPreferences.getBoolean("pref_nearest_ap_show_offline_nodes", DEFAULT_SHOW_OFFLINE_NODES);
-        numberOfNodes = sharedPreferences.getInt("pref_nearest_ap_number_nodes", DEFAULT_NUMBER_OF_NODES);
 
-
-        LostApiClient lostApiClient = new LostApiClient.Builder(this).build();
+        lostApiClient = new LostApiClient.Builder(this).build();
         lostApiClient.connect();
 
+        Log.d(TAG, "FindNearestNodesService created.");
+
+        super.onCreate();
+    }
+
+    @Override
+    protected void onHandleIntent(Intent intent) {
         onConnected();
+    }
+
+    @Override
+    public void onDestroy() {
+        lostApiClient.disconnect();
+
+        Log.d(TAG, "FindNearestNodesService destroyed.");
     }
 
     private JSONObject getJsonFromLocalFile() {
@@ -114,7 +124,10 @@ public class FindNearestNodesService extends IntentService {
         }
     }
 
-    private Node[] getNodesFromJson(JSONObject json) {
+    /**
+     * Extracts Node objects from the passed JSONObeject. Returns an empty array if parsing failed.
+     */
+    static private Node[] getNodesFromJson(JSONObject json) {
         try {
             JSONObject nodesJson = json.getJSONObject("nodes");
             ArrayList<Node> nodes = new ArrayList<>();
@@ -129,7 +142,7 @@ public class FindNearestNodesService extends IntentService {
             }
             return nodes.toArray(new Node[nodes.size()]);
         } catch (JSONException e) {
-            e.printStackTrace();
+            Log.e("TAG", "Failed parsing JSON.", e);
             return new Node[0];
         }
     }
@@ -262,7 +275,10 @@ public class FindNearestNodesService extends IntentService {
             responseError();
             return;
         }
-        Node[] nearest_nodes = getNearestNodes(nodes, mLastLocation);
+
+        int numberOfNodes = sharedPreferences.getInt("pref_nearest_ap_number_nodes", DEFAULT_NUMBER_OF_NODES);
+        boolean showOfflineNodes = sharedPreferences.getBoolean("pref_nearest_ap_show_offline_nodes", DEFAULT_SHOW_OFFLINE_NODES);
+        Node[] nearest_nodes = getNearestNodes(nodes, mLastLocation, numberOfNodes, showOfflineNodes);
 
         Log.d(TAG, "Return nodes and timestamp");
         // Return nearest nodes to fragment.
@@ -279,7 +295,13 @@ public class FindNearestNodesService extends IntentService {
         LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
     }
 
-    private Node[] getNearestNodes(Node[] nodes, Location location) {
+    /**
+     * Determines the distance between the passed location and each node in nodes. The calculated
+     * distance between a node n and location is saved in n.distance in meters. The numberOfNodes
+     * with the smallest distance will be returned in an array. If showOfflineNodes is false, nodes
+     * that are offline will not be included in the returned nodes.
+     */
+    private static Node[] getNearestNodes(Node[] nodes, Location location, int numberOfNodes, boolean showOfflineNodes) {
         long startTime = System.currentTimeMillis();
         // Calculate distance between nodes and current position in meters.
         for(Node n: nodes){
