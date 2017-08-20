@@ -1,11 +1,14 @@
 package com.example.tobiastrumm.freifunkautoconnect;
 
+import android.Manifest;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -30,7 +33,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.zip.GZIPInputStream;
 
-public class FindNearestNodesService extends IntentService {
+public class FindNearestNodesService extends IntentService implements LostApiClient.ConnectionCallbacks {
 
     private final static String TAG = FindNearestNodesService.class.getSimpleName();
     private final static int DEFAULT_NUMBER_OF_NODES = 10;
@@ -50,16 +53,29 @@ public class FindNearestNodesService extends IntentService {
 
     private SharedPreferences sharedPreferences;
     private LostApiClient lostApiClient;
+    private final Object lock = new Object();
 
     public FindNearestNodesService(){
         super("FindNearestNodesService");
     }
 
     @Override
+    public void onConnected() {
+        // Notify in case the worker thread executing onHandleIntent was already waiting for
+        // lostApiClient to be connected in findNearestNodes().
+        synchronized (lock){
+            lock.notifyAll();
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended() {}
+
+    @Override
     public void onCreate() {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(FindNearestNodesService.this);
 
-        lostApiClient = new LostApiClient.Builder(this).build();
+        lostApiClient = new LostApiClient.Builder(this).addConnectionCallbacks(this).build();
         lostApiClient.connect();
 
         Log.d(TAG, "FindNearestNodesService created.");
@@ -69,7 +85,7 @@ public class FindNearestNodesService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        onConnected();
+        findNearestNodes();
     }
 
     @Override
@@ -249,7 +265,7 @@ public class FindNearestNodesService extends IntentService {
     }
 
 
-    private void onConnected() {
+    private void findNearestNodes() {
         JSONObject json = downloadLatestNodesJson();
         // If no newer nodes.json file was found online, use the local one.
         if(json == null){
@@ -270,7 +286,28 @@ public class FindNearestNodesService extends IntentService {
         }
         Node[] nodes = getNodesFromJson(json);
 
-        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation();
+        // Wait until lostApiClient is connected.
+        synchronized (lock){
+            while(!lostApiClient.isConnected()){
+                Log.d(TAG, "Waiting for lost api client to be connected.");
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    Log.e(TAG,"",e);
+                }
+            }
+        }
+        Log.d(TAG, "lost api client is connected.");
+
+        // Check permission for ACCESS_FINE_LOCATION
+        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        if(permissionCheck != PackageManager.PERMISSION_GRANTED){
+            Log.d(TAG, "ACCESS_FINE_LOCATION permission is missing.");
+            responseError();
+            return;
+        }
+
+        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(lostApiClient);
         if(mLastLocation == null){
             responseError();
             return;

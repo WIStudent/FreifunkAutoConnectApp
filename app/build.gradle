@@ -37,7 +37,7 @@ android {
 }
 
 dependencies {
-    compile 'com.mapzen.android:lost:1.0.1'
+    compile 'com.mapzen.android:lost:3.0.2'
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support:support-v4:25.3.1'
     compile 'com.android.support:support-v13:25.3.1'

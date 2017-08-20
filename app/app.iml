@@ -108,6 +108,7 @@
     </content>
     <orderEntry type="jdk" jdkName="Android API 25 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="lost-3.0.2" level="project" />
     <orderEntry type="library" name="butterknife-annotations-8.8.0" level="project" />
     <orderEntry type="library" name="percent-25.3.1" level="project" />
     <orderEntry type="library" name="transition-25.3.1" level="project" />
@@ -116,7 +117,6 @@
     <orderEntry type="library" name="support-v4-25.3.1" level="project" />
     <orderEntry type="library" name="support-media-compat-25.3.1" level="project" />
     <orderEntry type="library" name="support-v13-25.3.1" level="project" />
-    <orderEntry type="library" name="lost-1.0.1" level="project" />
     <orderEntry type="library" name="recyclerview-v7-25.3.1" level="project" />
     <orderEntry type="library" name="support-annotations-25.3.1" level="project" />
     <orderEntry type="library" name="support-vector-drawable-25.3.1" level="project" />
