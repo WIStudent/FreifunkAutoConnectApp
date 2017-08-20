@@ -29,7 +29,7 @@ public class AddAllNetworksService extends IntentService {
 
         // Add all networks to network configuration
         int i = 0;
-        WifiManager wmAsync = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        WifiManager wmAsync = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         for(Network n: networks){
             if(!n.active){
                 n.active = true;

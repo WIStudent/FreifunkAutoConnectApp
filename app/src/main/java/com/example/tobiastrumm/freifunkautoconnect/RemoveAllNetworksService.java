@@ -34,7 +34,7 @@ public class RemoveAllNetworksService extends IntentService {
 
         // Remove all networks from network configuration
         int i = 0;
-        WifiManager wmAsync = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        WifiManager wmAsync = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         List<WifiConfiguration> wificonf = wmAsync.getConfiguredNetworks();
         if(wificonf != null) {
             Collections.sort(wificonf, new WifiConfigurationComparator());

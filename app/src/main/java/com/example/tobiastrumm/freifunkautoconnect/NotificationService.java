@@ -302,7 +302,7 @@ public class NotificationService extends Service {
         super.onCreate();
 
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         connMan = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         prefMan = PreferenceManager.getDefaultSharedPreferences(this);
 

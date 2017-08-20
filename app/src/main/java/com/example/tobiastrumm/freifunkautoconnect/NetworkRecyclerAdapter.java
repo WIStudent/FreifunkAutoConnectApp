@@ -168,7 +168,7 @@ class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecyclerAdapter
 
     NetworkRecyclerAdapter(Context context) {
         this.context = context;
-        wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
 
         allNetworks = new ArrayList<>();
         filteredNetworks = new ArrayList<>();
