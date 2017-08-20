@@ -161,17 +161,17 @@ public class NotificationService extends Service {
 
             // TODO Remove debug messages
             // Print debug messages with the old and new found networks
-            String foundNetworksStr = "";
+            StringBuilder foundNetworksStr = new StringBuilder();
             for(Network n: foundNetworks){
-                foundNetworksStr += n.ssid + ", ";
+                foundNetworksStr.append(n.ssid).append(", ");
             }
-            Log.d(TAG, "Found networks: " + foundNetworksStr);
+            Log.d(TAG, "Found networks: " + foundNetworksStr.toString());
 
-            String oldfoundNetworksStr = "";
+            StringBuilder oldfoundNetworksStr = new StringBuilder();
             for(Network n: oldFoundNetworks){
-                oldfoundNetworksStr += n.ssid + ", ";
+                oldfoundNetworksStr.append(n.ssid).append(", ");
             }
-            Log.d(TAG, "Old Found networks: " + oldfoundNetworksStr);
+            Log.d(TAG, "Old Found networks: " + oldfoundNetworksStr.toString());
 
             if(sameResults){
                 // Do not send a notification again if no new Freifunk network was found.
@@ -224,9 +224,11 @@ public class NotificationService extends Service {
 
     private void sendNotification(List<Network> networks){
         String text = getString(R.string.notification_text);
+        StringBuilder textBuilder = new StringBuilder();
         for(Network n: networks){
-            text += n.ssid + ", ";
+            textBuilder.append(n.ssid).append(", ");
         }
+        text += textBuilder.toString();
         text = text.substring(0, text.length()-2);
 
         NotificationCompat.Builder mBuilder =
@@ -342,19 +344,19 @@ public class NotificationService extends Service {
         }
 
         // Read ssids.json from internal storage.
-        String jsonString = "";
+        StringBuilder jsonStringBuilder = new StringBuilder();
         InputStreamReader is = new InputStreamReader(new FileInputStream(ssidsJson));
         BufferedReader reader = new BufferedReader(is);
         String line;
         while ((line = reader.readLine()) != null) {
-            jsonString += line;
+            jsonStringBuilder.append(line);
         }
         reader.close();
 
         // Read SSIDs from JSON file
         networks.clear();
         try {
-            JSONObject json = new JSONObject(jsonString);
+            JSONObject json = new JSONObject(jsonStringBuilder.toString());
             JSONArray ssidsJsonArray = json.getJSONArray("ssids");
             for(int i = 0; i<ssidsJsonArray.length(); i++){
                 networks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));

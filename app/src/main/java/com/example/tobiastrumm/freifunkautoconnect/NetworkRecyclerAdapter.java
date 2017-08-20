@@ -280,19 +280,19 @@ class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecyclerAdapter
         }
 
         // Read ssids.json from internal storage.
-        String jsonString = "";
+        StringBuilder jsonStringBuilder = new StringBuilder();
         InputStreamReader is = new InputStreamReader(new FileInputStream(ssidsJson));
         BufferedReader reader = new BufferedReader(is);
         String line;
         while ((line = reader.readLine()) != null) {
-            jsonString += line;
+            jsonStringBuilder.append(line);
         }
         reader.close();
 
         // Read SSIDs from JSON file
         allNetworks.clear();
         try {
-            JSONObject json = new JSONObject(jsonString);
+            JSONObject json = new JSONObject(jsonStringBuilder.toString());
             JSONArray ssidsJsonArray = json.getJSONArray("ssids");
             for(int i = 0; i<ssidsJsonArray.length(); i++){
                 allNetworks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
