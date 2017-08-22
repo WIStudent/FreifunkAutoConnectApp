@@ -19,13 +19,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -176,8 +170,8 @@ class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecyclerAdapter
             // Get the ssids from the ssids.json file
             updateSSIDsFromJsonFile();
         }
-        catch(IOException e){
-            // Could not read SSIDs from csv file.
+        catch(IOException | JSONException e){
+            Log.e(TAG, "Could not read SSIDs from csv file.",e);
         }
     }
 
@@ -259,57 +253,25 @@ class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecyclerAdapter
      * which ssids are already included in the network configuration (This function simply calls
      * updateNetworkStatus() at its end). It is NOT necessary to call notifyDataSetChanged() after
      * this function was used.
-     * @throws IOException
      */
-    void updateSSIDsFromJsonFile() throws IOException {
-        // Check if ssids.json exists in internal storage.
-        File ssidsJson = context.getFileStreamPath("ssids.json");
-        if(!ssidsJson.exists()){
-            Log.d(TAG, "Copy ssids.json to internal storage.");
-            // If not, copy ssids.json from assets to internal storage.
-            FileOutputStream outputStream = context.openFileOutput("ssids.json", Context.MODE_PRIVATE);
-            InputStream inputStream = context.getAssets().open("ssids.json");
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while((bytesRead = inputStream.read(buffer)) != -1){
-                outputStream.write(buffer, 0, bytesRead);
-            }
-            inputStream.close();
-            outputStream.close();
-            Log.d(TAG, "Finished copying ssids.json to internal storage");
-        }
-
-        // Read ssids.json from internal storage.
-        StringBuilder jsonStringBuilder = new StringBuilder();
-        InputStreamReader is = new InputStreamReader(new FileInputStream(ssidsJson));
-        BufferedReader reader = new BufferedReader(is);
-        String line;
-        while ((line = reader.readLine()) != null) {
-            jsonStringBuilder.append(line);
-        }
-        reader.close();
-
+    void updateSSIDsFromJsonFile() throws IOException, JSONException {
         // Read SSIDs from JSON file
+        JSONObject json = SsidJsonReader.readSsisJsonFromFile(context);
         allNetworks.clear();
-        try {
-            JSONObject json = new JSONObject(jsonStringBuilder.toString());
-            JSONArray ssidsJsonArray = json.getJSONArray("ssids");
-            for(int i = 0; i<ssidsJsonArray.length(); i++){
-                allNetworks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
-            }
 
-            // Read the deprecated ssids
-            JSONArray deprecatedJsonArray = json.optJSONArray("deprecated");
-            if(deprecatedJsonArray != null){
-                for(int i = 0; i<deprecatedJsonArray.length(); i++){
-                    Network n = new Network('"' + deprecatedJsonArray.getString(i) + '"');
-                    n.deprecated = true;
-                    allNetworks.add(n);
-                }
-            }
+        JSONArray ssidsJsonArray = json.getJSONArray("ssids");
+        for(int i = 0; i<ssidsJsonArray.length(); i++){
+            allNetworks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
+        }
 
-        } catch (JSONException e) {
-            e.printStackTrace();
+        // Read the deprecated ssids
+        JSONArray deprecatedJsonArray = json.optJSONArray("deprecated");
+        if(deprecatedJsonArray != null){
+            for(int i = 0; i<deprecatedJsonArray.length(); i++){
+                Network n = new Network('"' + deprecatedJsonArray.getString(i) + '"');
+                n.deprecated = true;
+                allNetworks.add(n);
+            }
         }
 
         Collections.sort(allNetworks);

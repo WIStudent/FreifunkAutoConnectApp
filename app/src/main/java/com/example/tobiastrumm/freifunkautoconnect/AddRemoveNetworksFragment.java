@@ -27,6 +27,8 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -126,8 +128,8 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
                         // Notify user that a new SSID list was downloaded.
                         Toast toast = Toast.makeText(getActivity(), getString(R.string.message_ssids_updated), Toast.LENGTH_LONG);
                         toast.show();
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    } catch (IOException | JSONException e) {
+                        Log.e(TAG, "Failed updating ssids from file.", e);
                     }
                     break;
             }
@@ -223,8 +225,8 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
         // Necessary because the network configuration or the "show deprecated SSIDs" setting might be changed in the meantime.
         try{
             networkRecyclerAdapter.updateSSIDsFromJsonFile();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException | JSONException e) {
+            Log.e(TAG, "Failed updating SSIDs from file.", e);
         }
 
         // The service could have finished while no Broadcast Receiver was registered that could have received the signal to set showProgress to false;
@@ -248,8 +250,8 @@ public class AddRemoveNetworksFragment extends Fragment implements FragmentLifec
         // Necessary because the network configuration or the "show deprecated SSIDs" setting might be changed in the meantime.
         try{
             networkRecyclerAdapter.updateSSIDsFromJsonFile();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException | JSONException e) {
+            Log.e(TAG, "Failed updating ssids from file.", e);
         }
     }
 
