@@ -13,7 +13,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
@@ -36,11 +35,9 @@ public class NotificationService extends Service {
     private final static String TAG = NotificationService.class.getSimpleName();
     private final static int NOTIFICATION_ID = 1;
 
-    private List<Network> networks;
+    private List<Network> networks = new ArrayList<>();
     private List<Network> foundNetworks = new ArrayList<>();
 
-    private WifiReceiver wifiReceiver;
-    private UpdateSSIDsReceiver updateSSIDsReceiver;
 
     private NotificationManager mNotificationManager;
     private WifiManager wm;
@@ -48,59 +45,32 @@ public class NotificationService extends Service {
     private ConnectivityManager connMan;
 
 
-    private class CheckNotificationAsyncTask extends AsyncTask<Void, Void, Void> {
-
-        @Override
-        protected Void doInBackground(Void... params) {
-           checkIfNotificationShouldBeSend();
-            return null;
-        }
-    }
-
-    private class WifiReceiver extends BroadcastReceiver {
-        private WifiReceiver() {
-        }
-
+    private final BroadcastReceiver wifiReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "WifiReceiver: onReceive was called");
-            /* Create a new CheckNotificationAsyncTask object and start it. The parameter AsyncTask.SERIAL_EXECUTOR
-             * makes sure that no two CustomAsyncTasks run at the same time.
-             */
-            new CheckNotificationAsyncTask().executeOnExecutor(AsyncTask.SERIAL_EXECUTOR);
+            Log.d(TAG, "wifiReceiver: onReceive was called");
+            new Thread(() -> checkIfNotificationShouldBeSend()).start();
         }
-    }
+    };
 
-    private class UpdateSSIDsAsyncTask extends AsyncTask<Void, Void, Void>{
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-                getSSIDs();
-            } catch (IOException | JSONException e) {
-                e.printStackTrace();
-                Log.e(TAG, "Updating SSIDs failed.", e);
-            }
-            return null;
-        }
-    }
-
-    private class UpdateSSIDsReceiver extends BroadcastReceiver{
-        private UpdateSSIDsReceiver(){
-        }
-
+    private final BroadcastReceiver updateSSIDsReceiver = new BroadcastReceiver(){
         @Override
         public void onReceive(Context context, Intent intent) {
             switch(intent.getStringExtra(DownloadSsidJsonService.STATUS_TYPE)) {
                 case DownloadSsidJsonService.STATUS_TYPE_REPLACED:
                     Log.d(TAG, "UpdateSSIDsReceiver : onReceive was called with STATUS_TYPE_REPLACED");
-                    new UpdateSSIDsAsyncTask().execute();
+                    new Thread(() -> {
+                        try {
+                            getSSIDs();
+                        } catch (IOException | JSONException e) {
+                            e.printStackTrace();
+                            Log.e(TAG, "Updating SSIDs failed.", e);
+                        }
+                    }).start();
                     break;
             }
         }
-
-
-    }
+    };
 
     /**
      * This function checks if a notification should be send to the user or if a sent notification
@@ -264,27 +234,7 @@ public class NotificationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "NotificationService was started");
-        networks = new ArrayList<>();
-        try{
-            getSSIDs();
-        }
-        catch(IOException | JSONException e){
-            Log.e(TAG, "Could not read SSIDs from csv file.", e);
-            // Release the wake lock
-            if(intent != null) {
-                WakefulBroadcastReceiver.completeWakefulIntent(intent);
-            }
-            stopSelf();
-        }
-
-        // Register wifiReceiver
-        wifiReceiver = new WifiReceiver();
-        registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-
-        // Register updateSSIDsReceiver
-        updateSSIDsReceiver = new UpdateSSIDsReceiver();
-        registerReceiver(updateSSIDsReceiver, new IntentFilter(DownloadSsidJsonService.BROADCAST_ACTION));
+        Log.d(TAG, "onStartCommand");
 
         // Release the wake lock
         if(intent != null) {
@@ -297,16 +247,31 @@ public class NotificationService extends Service {
     public void onCreate() {
         super.onCreate();
 
+        Log.d(TAG, "onCreate");
+
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         connMan = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         prefMan = PreferenceManager.getDefaultSharedPreferences(this);
 
+        new Thread(() -> {
+            try {
+                getSSIDs();
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+                Log.e(TAG, "Updating SSIDs failed.", e);
+            }
+        }).start();
+
+        // Register wifiReceiver
+        registerReceiver(wifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        // Register updateSSIDsReceiver
+        registerReceiver(updateSSIDsReceiver, new IntentFilter(DownloadSsidJsonService.BROADCAST_ACTION));
     }
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "On destroyed was called");
+        Log.d(TAG, "onDestroy");
         unregisterReceiver(wifiReceiver);
         unregisterReceiver(updateSSIDsReceiver);
         mNotificationManager.cancel(NOTIFICATION_ID);
