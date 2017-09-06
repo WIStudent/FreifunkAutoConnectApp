@@ -26,8 +26,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 public class NotificationService extends Service {
@@ -35,8 +35,8 @@ public class NotificationService extends Service {
     private final static String TAG = NotificationService.class.getSimpleName();
     private final static int NOTIFICATION_ID = 1;
 
-    private List<Network> networks = new ArrayList<>();
-    private List<Network> foundNetworks = new ArrayList<>();
+    private HashSet<String> networks = new HashSet<>();
+    private HashSet<String> foundNetworks = new HashSet<>();
 
 
     private NotificationManager mNotificationManager;
@@ -78,74 +78,70 @@ public class NotificationService extends Service {
      * This function is synchronized to avoid calling it while another thread is running getSSIDs().
      */
     synchronized private void checkIfNotificationShouldBeSend(){
+        // Save previously observed ssids.
+        HashSet<String> oldFoundNetworks = new HashSet<>(foundNetworks);
+        foundNetworks = new HashSet<>();
+
+        // Do not send a notification if the device is already connected to Freifunk
+        boolean alreadyConnectedToFreifunk = checkIfAlreadyConnectedToFreifunk();
+        if(alreadyConnectedToFreifunk){
+            removeNotification();
+            return;
+        }
+
+        // Do not send a notification if the device is already connected to a network and the user
+        // does not wish for a notification in this case.
+        boolean noNotifiactionWhenConnected = prefMan.getBoolean("pref_no_notification_connected", true);
+        if (noNotifiactionWhenConnected && checkIfAlreadyConnectedToAnyNetwork()){
+            removeNotification();
+            return;
+        }
+
+
         // Check if Freifunk networks are in reach.
         List<ScanResult> results = wm.getScanResults();
-        List<Network> oldFoundNetworks = new ArrayList<>(foundNetworks);
-        foundNetworks = new ArrayList<>();
-
-        if(results != null) {
-            for (ScanResult r : results) {
-                    /* Create a new Network object for each network in range. Then check if the list
-                     * of Freifunk networks contains this network. This works because the equals()
-                     * method of Network was overwritten to return true if the SSIDs are equal.
-                     */
-                Network compareWith = new Network('"' + r.SSID + '"');
-                if (networks.contains(compareWith)) {
-                    // foundNetworks holds all Freifunk Networks that are currently in reach.
-                    if (!foundNetworks.contains(compareWith)) {
-                        foundNetworks.add(compareWith);
-                    }
-                }
-            }
+        if(results == null){
+            removeNotification();
+            return;
         }
 
+        for (ScanResult r: results){
+            foundNetworks.add('"' + r.SSID + '"');
+        }
+
+        // Get intersection between observed SSIDs and Freifunk ssids.
+        foundNetworks.retainAll(networks);
+
+        // Cancel the notification if no Freifunk network is in reach anymore.
         if(foundNetworks.isEmpty()){
-            // Cancel the notification if no Freifunk network is in reach anymore.
-            mNotificationManager.cancel(NOTIFICATION_ID);
+            removeNotification();
+            return;
         }
-        else {
-            // Look if device is already connected to a network
-            boolean alreadyConnectedToAnyNetwork = checkIfAlreadyConnectedToAnyNetwork();
-            boolean noNotifiactionWhenConnected = prefMan.getBoolean("pref_no_notification_connected", true);
 
-            if (noNotifiactionWhenConnected && alreadyConnectedToAnyNetwork){
-                // Do not send a notification if the device is already connected to a network and the user
-                // does not wish for a notification in this case.
-                return;
-            }
+        // Look if this scan found different Freifunk networks than the previous scan.
+        boolean sameResults = oldFoundNetworks.containsAll(foundNetworks);
 
-            boolean alreadyConnectedToFreifunk = checkIfAlreadyConnectedToFreifunk();
-            if(alreadyConnectedToFreifunk){
-                // Do not send a notification if the device is already connected to Freifunk
-                return;
-            }
-
-            // Look if this scan found different Freifunk networks than the previous scan.
-            boolean sameResults = oldFoundNetworks.containsAll(foundNetworks);
-
-            // TODO Remove debug messages
-            // Print debug messages with the old and new found networks
-            StringBuilder foundNetworksStr = new StringBuilder();
-            for(Network n: foundNetworks){
-                foundNetworksStr.append(n.ssid).append(", ");
-            }
-            Log.d(TAG, "Found networks: " + foundNetworksStr.toString());
-
-            StringBuilder oldfoundNetworksStr = new StringBuilder();
-            for(Network n: oldFoundNetworks){
-                oldfoundNetworksStr.append(n.ssid).append(", ");
-            }
-            Log.d(TAG, "Old Found networks: " + oldfoundNetworksStr.toString());
-
-            if(sameResults){
-                // Do not send a notification again if no new Freifunk network was found.
-                return;
-            }
-
-            // Send the notification with the found Freifunk networks.
-            sendNotification(foundNetworks);
-            Log.d(TAG, "sendNotification was called");
+        // TODO Remove debug messages
+        // Print debug messages with the old and new found networks
+        StringBuilder foundNetworksStr = new StringBuilder();
+        for(String n: foundNetworks){
+            foundNetworksStr.append(n).append(", ");
         }
+        Log.d(TAG, "Found networks: " + foundNetworksStr.toString());
+
+        StringBuilder oldfoundNetworksStr = new StringBuilder();
+        for(String n: oldFoundNetworks){
+            oldfoundNetworksStr.append(n).append(", ");
+        }
+        Log.d(TAG, "Old Found networks: " + oldfoundNetworksStr.toString());
+
+        // Do not send a notification again if no new Freifunk network was found.
+        if(sameResults){
+            return;
+        }
+
+        // Send the notification with the found Freifunk networks.
+        sendNotification(foundNetworks);
     }
 
     /**
@@ -177,20 +173,19 @@ public class NotificationService extends Service {
         String currentSSID = wm.getConnectionInfo().getSSID();
         if(currentSSID != null){
             Log.d(TAG, "Check if " + currentSSID + " is a Freifunk network");
-            Network compareWith = new Network(currentSSID);
-            if(foundNetworks.contains(compareWith)){
-                Log.d(TAG, "Already connected with " + compareWith.ssid);
+            if(networks.contains(currentSSID)){
+                Log.d(TAG, "Already connected with " + currentSSID);
                 return true;
             }
         }
         return false;
     }
 
-    private void sendNotification(List<Network> networks){
+    private void sendNotification(Collection<String> networks){
         String text = getString(R.string.notification_text);
         StringBuilder textBuilder = new StringBuilder();
-        for(Network n: networks){
-            textBuilder.append(n.ssid).append(", ");
+        for(String n: networks){
+            textBuilder.append(n).append(", ");
         }
         text += textBuilder.toString();
         text = text.substring(0, text.length()-2);
@@ -223,6 +218,11 @@ public class NotificationService extends Service {
         }
         mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
         Log.d(TAG, "Notification was sent.");
+    }
+
+    private void removeNotification(){
+        mNotificationManager.cancel(NOTIFICATION_ID);
+        Log.d(TAG, "Notification was removed.");
     }
 
 
@@ -286,11 +286,10 @@ public class NotificationService extends Service {
     synchronized private void getSSIDs() throws IOException, JSONException {
         // Read SSIDs from JSON file
         JSONObject json = SsidJsonReader.readSsisJsonFromFile(this);
-        networks.clear();
+        networks = new HashSet<>();
         JSONArray ssidsJsonArray = json.getJSONArray("ssids");
         for(int i = 0; i<ssidsJsonArray.length(); i++){
-            networks.add(new Network('"' + ssidsJsonArray.getString(i) + '"'));
+            networks.add('"' + ssidsJsonArray.getString(i) + '"');
         }
-        Collections.sort(networks);
     }
 }
