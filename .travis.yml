@@ -8,7 +8,7 @@ android:
     - build-tools-25.0.3
     - platform-tools
     - tools
-    - android-25
+    - android-22
     - extra-android-support
     - extra-android-m2repository
     - sys-img-armeabi-v7a-android-22
