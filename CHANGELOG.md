@@ -1,6 +1,6 @@
 # Change Log
 
-## [unreleased]
+## [0.8] - 2017-09-08
 ### Changed
 - Code Improvements
 - Updated info page
