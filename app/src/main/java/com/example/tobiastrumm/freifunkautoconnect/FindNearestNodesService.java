@@ -38,7 +38,7 @@ public class FindNearestNodesService extends IntentService implements LostApiCli
     private final static String TAG = FindNearestNodesService.class.getSimpleName();
     private final static int DEFAULT_NUMBER_OF_NODES = 10;
     private final static boolean DEFAULT_SHOW_OFFLINE_NODES = false;
-    private final static String NODES_JSON_URL = "http://freifunkapp.tobiastrumm.de/nodes2.json.gz";
+    private final static String NODES_JSON_URL = "http://freifunkapp.tobiastrumm.de/nodes.json.gz";
     private final static String NODES_JSON_FILE_NAME = "nodes.json";
     private final static long UPDATE_INTERVAL = 60;
     private final static int HTTP_REQUEST_TIMEOUT = 5000;
