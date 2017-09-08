@@ -9,8 +9,8 @@ The Freifunk Auto Connect App makes it easier to add multiple Freifunk SSIDs to 
 ## How to add missing SSIDs
 Please visit the [freifunk-ssids repository](https://github.com/WIStudent/freifunk-ssids) to find out how to submit missing SSIDs.
 
-## Where does the position and online status data about the Freifunk nodes come from?
-Currently a [python script](https://github.com/WIStudent/FreifunkNodeLocationCrawler) running on a Raspberry Pi at my home is crawling Freifunk API files every hour to get position and online status of Freifunk access points and writing the data into a json file. This json file is then uploaded to a webserver. When someone wants to know the nearest Freifunk access points around them and the local json file containing the position data is older than 65 min, the app will check if a newer file is available online.
+## Where does the position and online status data about the Freifunk access points come from?
+This [python script](https://github.com/WIStudent/FreifunkNodeLocationConverter) checks https://api.freifunk.net/data/freifunk-karte-data.json for updated position data and converts it into a format suitable for the Freifunk Auto Connect App. The script is executed every 10 minutes on a Raspberry Pi and the result is uploaded to a webserver. The app uses the 'If-Modified-Since' field in the http request to check if a new version was uploaded since its last check.
 
 ## Build status
 Build status on [Travis CI](https://travis-ci.org/):
@@ -18,6 +18,9 @@ Build status on [Travis CI](https://travis-ci.org/):
 
 ## Availability in stores
 
-This app is already available at F-Droid:
+This app is also available on [F-Droid](https://f-droid.org/packages/com.example.tobiastrumm.freifunkautoconnect/):
 
 [![Matekarte on F-Droid](https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=https://f-droid.org/app/com.example.tobiastrumm.freifunkautoconnect&choe=UTF-8)](https://f-droid.org/app/com.example.tobiastrumm.freifunkautoconnect)
+
+## Articles about this app
+- [Appvorstellung: Freifunk Auto Connect](http://freifunk-kreis-steinfurt.de/2016/03/appvorstellung-freifunk-auto-connect/)

@@ -1,4 +1,12 @@
 # Change Log
+
+## [unreleased]
+### Changed
+- Code Improvements
+- Updated info page
+- Use https://api.freifunk.net/data/freifunk-karte-data.json to get the latest positions of Freifunk access points.
+- Use 'If-Modified-Since' and 'If-None-Match' fields in the http request to only download the nodes.json and ssids.json file if a new version is available.
+
 ##[0.7] - 2016-06-03
 ### Added
 - User will be notified if a network cannot be removed.
