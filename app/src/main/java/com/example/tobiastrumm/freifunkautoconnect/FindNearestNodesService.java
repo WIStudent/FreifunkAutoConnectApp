@@ -38,7 +38,7 @@ public class FindNearestNodesService extends IntentService implements LostApiCli
     private final static String TAG = FindNearestNodesService.class.getSimpleName();
     private final static int DEFAULT_NUMBER_OF_NODES = 10;
     private final static boolean DEFAULT_SHOW_OFFLINE_NODES = false;
-    private final static String NODES_JSON_URL = "http://freifunkapp.tobiastrumm.de/nodes.json.gz";
+    private final static String NODES_JSON_URL[] = { "http://freifunkapp.4830.org/nodes.json.gz", "http://freifunkapp.tobiastrumm.de/nodes.json.gz"};
     private final static String NODES_JSON_FILE_NAME = "nodes.json";
     private final static long UPDATE_INTERVAL = 60;
     private final static int HTTP_REQUEST_TIMEOUT = 5000;
@@ -164,6 +164,20 @@ public class FindNearestNodesService extends IntentService implements LostApiCli
     }
 
     /**
+     * Tries to open a HttpURLConnection to the nodes.json.gz file using the passed url.
+     * @param url URL of the nodes.json.gz file
+     */
+    private HttpURLConnection openHttpURLConnection(String url) throws IOException {
+        URL u = new URL(url);
+        HttpURLConnection urlConnection = (HttpURLConnection) u.openConnection();
+        urlConnection.setConnectTimeout(HTTP_REQUEST_TIMEOUT);
+        urlConnection.setReadTimeout(HTTP_REQUEST_TIMEOUT);
+        long nodes_json_last_modified = sharedPreferences.getLong("pref_nearest_ap_nodes_json_last_modified", 0);
+        urlConnection.setIfModifiedSince(nodes_json_last_modified);
+        return urlConnection;
+    }
+
+    /**
      * Tries to download a new nodes.json file. If a newer file is available online, the local one
      * will be replaced and the JSONObject will be returned. If not, null will be returned. Null
      * will also be returned, if the last successful check for a new file was done in the last 60
@@ -179,38 +193,43 @@ public class FindNearestNodesService extends IntentService implements LostApiCli
             Log.d(TAG, "Not enough time has passed since the last try to download nodes.json.");
             return null;
         }
+        update_last_try_update_nodes();
 
         HttpURLConnection urlConnection = null;
         String newer_nodes;
+        // Download nodes.json.gz File.
         try {
-            // Download nodes.json.gz File.
-            Log.d(TAG, "Start downloading " + NODES_JSON_FILE_NAME + " file");
-            URL url = new URL(NODES_JSON_URL);
-            urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setConnectTimeout(HTTP_REQUEST_TIMEOUT);
-            urlConnection.setReadTimeout(HTTP_REQUEST_TIMEOUT);
-            Long nodes_json_last_modified = sharedPreferences.getLong("pref_nearest_ap_nodes_json_last_modified", 0);
-            urlConnection.setIfModifiedSince(nodes_json_last_modified);
-            urlConnection.setRequestProperty("Accept-Encoding", "gzip");
+            for(String url: NODES_JSON_URL){
+                Log.d(TAG, "Try downloading " + NODES_JSON_FILE_NAME + " file from " + url);
+                urlConnection = openHttpURLConnection(url);
+                int statusCode = urlConnection.getResponseCode();
+                Log.d(TAG, url + ": Response Code " + statusCode);
 
-            int statusCode = urlConnection.getResponseCode();
-            update_last_try_update_nodes();
+                if (statusCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                    return null;
+                }
+                if (statusCode == HttpURLConnection.HTTP_OK){
+                    break;
+                }
+                urlConnection.disconnect();
+                urlConnection = null;
+            }
 
-            if (statusCode != HttpURLConnection.HTTP_OK) {
-                Log.w(TAG, url.toExternalForm() + " : Failed to download " + NODES_JSON_FILE_NAME + ". Response Code " + statusCode);
+            if(urlConnection == null){
                 return null;
             }
-            String encoding = urlConnection.getContentEncoding();
+
             InputStream is = urlConnection.getInputStream();
             BufferedReader bufferedReader;
-
+            String content_type = urlConnection.getContentType();
+            Log.d(TAG, "Content type: " + content_type);
             // Download gzipped file
-            if (encoding != null && encoding.toLowerCase().contains("gzip")) {
+            if (content_type != null && content_type.toLowerCase().contains("gzip")) {
                 bufferedReader = new BufferedReader(new InputStreamReader(new GZIPInputStream(is)));
-                Log.d(TAG, NODES_JSON_URL + " is gzipped. Length: " + urlConnection.getContentLength());
+                Log.d(TAG, "Downloaded file is gzipped. Length: " + urlConnection.getContentLength());
             } else {
                 bufferedReader = new BufferedReader(new InputStreamReader(is));
-                Log.d(TAG, NODES_JSON_URL + " is not gzipped. Length: " + urlConnection.getContentLength());
+                Log.d(TAG, "Downloaded file is not gzipped. Length: " + urlConnection.getContentLength());
             }
 
             StringBuilder stringBuilder = new StringBuilder();
