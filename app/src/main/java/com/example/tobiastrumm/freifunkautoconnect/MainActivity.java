@@ -2,11 +2,11 @@ package com.example.tobiastrumm.freifunkautoconnect;
 
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.TabLayout;
@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements AddRemoveNetworks
         tabLayout.setupWithViewPager(viewPager);
 
         // Start NotificationService if it should running but isn't
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences sharedPref = getSharedPreferences(getString(R.string.shared_preference_key_settings), Context.MODE_PRIVATE);
         boolean notifications = sharedPref.getBoolean("pref_notification", false);
         if(notifications && !isNotificationServiceRunning()){
             startService(new Intent(this, NotificationService.class));

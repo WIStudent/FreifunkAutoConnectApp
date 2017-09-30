@@ -4,7 +4,6 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -92,7 +91,7 @@ public class DownloadSsidJsonService extends IntentService {
             URL url = new URL(SSID_URL);
             urlConnection = (HttpURLConnection) url.openConnection();
 
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(DownloadSsidJsonService.this);
+            SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.shared_preference_key_other), Context.MODE_PRIVATE);
             String savedEtag = sharedPreferences.getString("pref_etag_ssids_json", null);
             if (savedEtag != null) {
                 Log.d(TAG, "Setting Etag in http request " + savedEtag);

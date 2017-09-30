@@ -15,7 +15,6 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.WakefulBroadcastReceiver;
@@ -41,7 +40,7 @@ public class NotificationService extends Service {
 
     private NotificationManager mNotificationManager;
     private WifiManager wm;
-    private SharedPreferences prefMan;
+    private SharedPreferences sharedPreferences;
     private ConnectivityManager connMan;
 
 
@@ -91,7 +90,7 @@ public class NotificationService extends Service {
 
         // Do not send a notification if the device is already connected to a network and the user
         // does not wish for a notification in this case.
-        boolean noNotifiactionWhenConnected = prefMan.getBoolean("pref_no_notification_connected", true);
+        boolean noNotifiactionWhenConnected = sharedPreferences.getBoolean("pref_no_notification_connected", true);
         if (noNotifiactionWhenConnected && checkIfAlreadyConnectedToAnyNetwork()){
             removeNotification();
             return;
@@ -198,8 +197,8 @@ public class NotificationService extends Service {
                         .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                         .setContentIntent(PendingIntent.getActivity(NotificationService.this,0, new Intent(Settings.ACTION_WIFI_SETTINGS),0));
 
-        boolean vibrate = prefMan.getBoolean("pref_notification_vibrate", true);
-        boolean playSound = prefMan.getBoolean("pref_notification_sound", false);
+        boolean vibrate = sharedPreferences.getBoolean("pref_notification_vibrate", true);
+        boolean playSound = sharedPreferences.getBoolean("pref_notification_sound", false);
         if(vibrate){
             if(playSound){
                 mBuilder.setDefaults(Notification.DEFAULT_ALL);
@@ -252,7 +251,7 @@ public class NotificationService extends Service {
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         connMan = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        prefMan = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPreferences = getSharedPreferences(getString(R.string.shared_preference_key_settings), Context.MODE_PRIVATE);
 
         new Thread(() -> {
             try {

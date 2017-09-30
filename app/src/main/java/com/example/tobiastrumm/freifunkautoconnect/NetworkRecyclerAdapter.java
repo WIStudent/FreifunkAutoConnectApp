@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
-import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -89,9 +88,8 @@ class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecyclerAdapter
                 }
 
 
-                /*****  Notify the networkRecyclerAdapter that the item at adapterPosition was changed. *****/
-                SharedPreferences prefMan = PreferenceManager.getDefaultSharedPreferences(context);
-                boolean show_deprecated = prefMan.getBoolean("pref_deprecated_ssids", false);
+                // Notify the networkRecyclerAdapter that the item at adapterPosition was changed.
+                boolean show_deprecated = sharedPreferences.getBoolean("pref_deprecated_ssids", false);
                 // If a deprecated network was removed and depricated networks should not be shown, remove the network
                 // from the RecyclerView completely.
                 if(!show_deprecated && !n.active && n.deprecated){
@@ -159,10 +157,14 @@ class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecyclerAdapter
     private Context context;
     private WifiManager wifiManager;
 
+    private SharedPreferences sharedPreferences;
+
 
     NetworkRecyclerAdapter(Context context) {
         this.context = context;
         wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+        sharedPreferences = context.getSharedPreferences(context.getString(R.string.shared_preference_key_settings), Context.MODE_PRIVATE);
 
         allNetworks = new ArrayList<>();
         filteredNetworks = new ArrayList<>();
@@ -298,8 +300,7 @@ class NetworkRecyclerAdapter extends RecyclerView.Adapter<NetworkRecyclerAdapter
 
         // if deprecated ssids should not be shown, remove all networks from the list that are deprecated and not included in the
         // network configuration.
-        SharedPreferences prefMan = PreferenceManager.getDefaultSharedPreferences(context);
-        boolean show_deprecated = prefMan.getBoolean("pref_deprecated_ssids", false);
+        boolean show_deprecated = sharedPreferences.getBoolean("pref_deprecated_ssids", false);
         if(!show_deprecated){
             for(Iterator<Network> it = allNetworks.iterator(); it.hasNext();) {
                 Network n = it.next();

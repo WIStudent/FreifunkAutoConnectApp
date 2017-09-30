@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -51,7 +50,8 @@ public class FindNearestNodesService extends IntentService implements LostApiCli
     public static final String RETURN_LAST_UPDATE = "return_last_update";
 
 
-    private SharedPreferences sharedPreferences;
+    private SharedPreferences sharedPreferencesSettings;
+    private SharedPreferences sharedPreferencesOther;
     private LostApiClient lostApiClient;
     private final Object lock = new Object();
 
@@ -73,7 +73,8 @@ public class FindNearestNodesService extends IntentService implements LostApiCli
 
     @Override
     public void onCreate() {
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(FindNearestNodesService.this);
+        sharedPreferencesSettings = getSharedPreferences(getString(R.string.shared_preference_key_settings), Context.MODE_PRIVATE);
+        sharedPreferencesOther = getSharedPreferences(getString(R.string.shared_preference_key_other), Context.MODE_PRIVATE);
 
         lostApiClient = new LostApiClient.Builder(this).addConnectionCallbacks(this).build();
         lostApiClient.connect();
@@ -172,7 +173,7 @@ public class FindNearestNodesService extends IntentService implements LostApiCli
         HttpURLConnection urlConnection = (HttpURLConnection) u.openConnection();
         urlConnection.setConnectTimeout(HTTP_REQUEST_TIMEOUT);
         urlConnection.setReadTimeout(HTTP_REQUEST_TIMEOUT);
-        long nodes_json_last_modified = sharedPreferences.getLong("pref_nearest_ap_nodes_json_last_modified", 0);
+        long nodes_json_last_modified = sharedPreferencesOther.getLong("pref_nearest_ap_nodes_json_last_modified", 0);
         urlConnection.setIfModifiedSince(nodes_json_last_modified);
         return urlConnection;
     }
@@ -188,7 +189,7 @@ public class FindNearestNodesService extends IntentService implements LostApiCli
     private JSONObject downloadLatestNodesJson() {
         // Don't try downloading again until UPDATE_INTERVAL sec have passed since the last try.
         long currentTime = System.currentTimeMillis() / 1000L;
-        long last_try_update_nodes = sharedPreferences.getLong("pref_nearest_ap_last_try_update_nodes", 0);
+        long last_try_update_nodes = sharedPreferencesOther.getLong("pref_nearest_ap_last_try_update_nodes", 0);
         if((currentTime - last_try_update_nodes) <= UPDATE_INTERVAL ){
             Log.d(TAG, "Not enough time has passed since the last try to download nodes.json.");
             return null;
@@ -240,7 +241,7 @@ public class FindNearestNodesService extends IntentService implements LostApiCli
             newer_nodes = stringBuilder.toString();
 
             // Update last-modified value
-            SharedPreferences.Editor editor = sharedPreferences.edit();
+            SharedPreferences.Editor editor = sharedPreferencesOther.edit();
             editor.putLong("pref_nearest_ap_nodes_json_last_modified", urlConnection.getLastModified());
             editor.apply();
 
@@ -278,7 +279,7 @@ public class FindNearestNodesService extends IntentService implements LostApiCli
     }
 
     private void update_last_try_update_nodes(){
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+        SharedPreferences.Editor editor = sharedPreferencesOther.edit();
         editor.putLong("pref_nearest_ap_last_try_update_nodes", System.currentTimeMillis() / 1000L);
         editor.apply();
     }
@@ -332,8 +333,8 @@ public class FindNearestNodesService extends IntentService implements LostApiCli
             return;
         }
 
-        int numberOfNodes = sharedPreferences.getInt("pref_nearest_ap_number_nodes", DEFAULT_NUMBER_OF_NODES);
-        boolean showOfflineNodes = sharedPreferences.getBoolean("pref_nearest_ap_show_offline_nodes", DEFAULT_SHOW_OFFLINE_NODES);
+        int numberOfNodes = sharedPreferencesSettings.getInt("pref_nearest_ap_number_nodes", DEFAULT_NUMBER_OF_NODES);
+        boolean showOfflineNodes = sharedPreferencesSettings.getBoolean("pref_nearest_ap_show_offline_nodes", DEFAULT_SHOW_OFFLINE_NODES);
         Node[] nearest_nodes = getNearestNodes(nodes, mLastLocation, numberOfNodes, showOfflineNodes);
 
         Log.d(TAG, "Return nodes and timestamp");
