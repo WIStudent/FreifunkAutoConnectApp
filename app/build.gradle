@@ -8,8 +8,8 @@ android {
         applicationId "com.example.tobiastrumm.freifunkautoconnect"
         minSdkVersion 15
         targetSdkVersion 26
-        versionCode 9
-        versionName "0.8"
+        versionCode 10
+        versionName "0.9"
     }
 
     buildTypes {
@@ -38,12 +38,12 @@ android {
 
 dependencies {
     compile 'com.mapzen.android:lost:3.0.2'
-    compile 'com.android.support:appcompat-v7:26.0.2'
-    compile 'com.android.support:support-v4:26.0.2'
-    compile 'com.android.support:support-v13:26.0.2'
-    compile 'com.android.support:design:26.0.2'
-    compile 'com.android.support:percent:26.0.2'
-    compile 'com.android.support:recyclerview-v7:26.0.2'
+    compile 'com.android.support:appcompat-v7:26.1.0'
+    compile 'com.android.support:support-v4:26.1.0'
+    compile 'com.android.support:support-v13:26.1.0'
+    compile 'com.android.support:design:26.1.0'
+    compile 'com.android.support:percent:26.1.0'
+    compile 'com.android.support:recyclerview-v7:26.1.0'
     compile 'com.jakewharton:butterknife:8.8.0'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.0'
 }

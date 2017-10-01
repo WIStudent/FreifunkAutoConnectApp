@@ -1,5 +1,12 @@
 # Change Log
 
+## [0.9] - 2017-10-01
+### Added
+- Backup settings using Android's backup system on devices with Android API 23 or newer.
+
+### Changed
+- Added new source for Freifunk access point locations.
+
 ## [0.8] - 2017-09-08
 ### Changed
 - Code Improvements
