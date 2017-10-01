@@ -7,6 +7,7 @@ android:
     - build-tools-26.0.1
     - platform-tools
     - tools
+    - android-26
     - android-22
     - sys-img-armeabi-v7a-android-22
 
