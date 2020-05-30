@@ -1,3 +1,5 @@
+**This app is no longer maintained.** If you still think the world needs an app like this one, feel free to fork this project. Although I would recommend developing a new app from scratch, seeing how much Android development has changed over the last few years. 
+
 # Freifunk Auto Connect App
 
 &copy; 2015 [Tobias Trumm](mailto:tobiastrumm@uni-muenster.de) licensed under GPLv3  
